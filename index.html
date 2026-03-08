@@ -333,6 +333,17 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15
 #vendor-mode{display:none;}
 #vendor-mode.show{display:block;}
 
+
+/* ── VENDOR MODE OVERRIDE ── */
+body.vendor-mode .steps,
+body.vendor-mode #step1,
+body.vendor-mode #step2,
+body.vendor-mode #step3 {
+  display: none !important;
+}
+body.vendor-mode #vendor-mode {
+  display: block !important;
+}
 /* ── PRINT ── */
 @media print {
   body { background: #fff !important; padding: 0 !important; }
@@ -1029,20 +1040,16 @@ function downloadPDF() {
 function initVendorMode() {
   const params = new URLSearchParams(window.location.search);
   if (!params.get('vendor')) return;
+  // Immediately hide UI before parsing data
+  document.body.classList.add('vendor-mode');
   try {
     const d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
     sessionStorage.setItem('lfd', JSON.stringify(d));
     // Hide all normal UI
-    // Hide all normal UI immediately
-    document.body.classList.add('vendor-mode');
-    ['step1','step2','step3'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){el.style.display='none';el.style.setProperty('display','none','important');}
-    });
-    const steps=document.querySelector('.steps');
-    if(steps){steps.style.display='none';steps.style.setProperty('display','none','important');}
+    // UI already hidden via body.vendor-mode class
     // Show vendor mode
     const vm = document.getElementById('vendor-mode');
+    vm.style.display = 'block';
     vm.classList.add('show');
     // Fill all vendor fields
     const codeMap2={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
