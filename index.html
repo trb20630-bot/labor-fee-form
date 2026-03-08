@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勞務報酬單</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #e07b1a;
+  --green:  #c96a10;
+  --ink:    #1a1205;
+  --light:  #6b6b80;
+  --rule:   #d4cdc4;
+  --bg:     #fdf3e7;
+  --card:   #fffaf4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 28px 16px 60px;
+}
+
+/* ── STEPS ── */
+.steps {
+  max-width: 600px; margin: 0 auto 24px;
+  display: flex; align-items: center;
+}
+.step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; }
+.step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: 55%; width: 90%; height: 2px; background: var(--rule); z-index: 0; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; position: relative; z-index: 1; }
+.step.active  .step-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step.pending .step-dot { background: #fff; border-color: var(--rule); color: #aaa; }
+.step.done    .step-dot { background: var(--green); border-color: var(--green); color: #fff; }
+.step-lbl { font-size: 11px; color: var(--light); letter-spacing: .5px; }
+.step.active .step-lbl { color: var(--accent); font-weight: 600; }
+
+/* ── CARD ── */
+.card {
+  max-width: 600px; margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--accent);
+  box-shadow: 3px 3px 0 rgba(0,0,0,.07), 6px 6px 0 rgba(0,0,0,.03);
+  padding: 32px 36px 36px;
+}
+
+/* ── DOC HEADER ── */
+.doc-header {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  border-bottom: 2px double var(--rule);
+  padding-bottom: 18px; margin-bottom: 28px;
+}
+.logo-box {
+  flex-shrink: 0; width: 64px; height: 64px;
+  border: 1.5px solid var(--accent);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+}
+.logo-box .ico  { font-size: 20px; }
+.logo-box .en   { font-size: 7px; letter-spacing: 1px; color: var(--accent); font-weight: 700; }
+.logo-box .zh   { font-size: 6.5px; color: var(--light); text-align: center; line-height: 1.4; }
+.doc-titles     { flex: 1; text-align: center; }
+.doc-titles .co { font-family: 'Noto Serif TC', serif; font-size: 19px; font-weight: 700; letter-spacing: 3px; }
+.doc-titles .sub{ font-size: 11px; color: var(--light); letter-spacing: 3px; margin-top: 3px; }
+
+/* ── ITEM LIST ── */
+.item {
+  display: flex; align-items: flex-start;
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 0;
+  gap: 14px;
+}
+.item:last-of-type { border-bottom: none; }
+
+.item-no {
+  flex-shrink: 0; width: 26px; height: 26px;
+  background: var(--accent); color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 2px;
+}
+.item-body { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.item-label {
+  font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: .5px;
+}
+.item-label .req { color: var(--accent); margin-left: 2px; }
+.item-hint { font-size: 11px; color: var(--light); }
+
+/* ── INPUTS ── */
+input[type=text], input[type=tel], input[type=date], select, textarea {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px; color: var(--ink);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139,26,26,.08);
+}
+select {
+  appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 28px;
+}
+textarea { resize: vertical; min-height: 52px; line-height: 1.6; }
+input[type=text]:disabled { background: #f4f2ee; color: var(--light); }
+
+/* autofill badge */
+.af { display: none; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--green); }
+.af.show { display: flex; }
+.af button { padding: 3px 10px; font-size: 11px; border: none; cursor: pointer; border-radius: 2px; font-family: 'Noto Sans TC', sans-serif; }
+.af .yes { background: var(--green); color: #fff; }
+.af .no  { background: transparent; color: var(--light); border: 1px solid var(--rule); }
+
+/* ── WORK ROW ── */
+.work-row { display: flex; flex-direction: column; gap: 6px; }
+#f-work-custom { display: none; }
+#f-work-custom.show { display: block; }
+
+/* ── AMOUNT ROW ── */
+.amt-row { display: flex; align-items: center; gap: 10px; }
+.amt-row input { flex: 1; }
+.amt-eq { font-size: 18px; color: var(--accent); flex-shrink: 0; }
+.amt-result {
+  flex: 1; padding: 10px 12px;
+  background: #fff; border: 1px solid var(--rule); border-radius: 3px;
+  font-size: 14px; font-weight: 600; color: var(--accent);
+  font-family: 'Noto Serif TC', serif; min-height: 42px;
+}
+
+/* ── DEDUCTION MINI ── */
+.ded { display: none; margin-top: 8px; }
+.ded.show { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ded-cell {
+  background: #fff; border: 1px solid var(--rule); border-radius: 3px;
+  text-align: center; padding: 7px 4px;
+}
+.ded-cell .dr { font-size: 10px; color: var(--light); }
+.ded-cell .da { font-size: 14px; font-weight: 700; color: var(--accent); }
+.ded-cell .dl { font-size: 10px; color: var(--light); }
+
+/* ── RADIO ── */
+.radio-row { display: flex; gap: 20px; flex-wrap: wrap; padding: 4px 0; }
+.radio-row label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+/* ── BANK ROW ── */
+.bank-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.bank-row .bcode { flex: 0 0 220px; }
+.bank-row .bacc  { flex: 1; min-width: 140px; }
+
+/* ── SIG BOX ── */
+.sig-box {
+  position: relative; border: 2px dashed var(--rule);
+  background: #f8f5ef; height: 88px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; border-radius: 3px;
+}
+.sig-wm {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700;
+  color: rgba(139,26,26,.1); letter-spacing: 8px;
+  pointer-events: none; user-select: none;
+}
+.sig-box img { max-height: 80px; max-width: 100%; object-fit: contain; }
+
+/* ── ACTIONS ── */
+.actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rule);
+}
+.btn-ghost {
+  padding: 10px 20px; border: 1.5px solid var(--rule); background: transparent;
+  color: var(--light); font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer; letter-spacing: .5px; border-radius: 2px; transition: all .18s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-next {
+  padding: 10px 28px; background: var(--accent); border: none; color: #fff;
+  font-size: 13px; font-weight: 600; font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer; letter-spacing: 1px; border-radius: 2px; transition: background .18s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-next::after { content: '→'; font-size: 15px; }
+.btn-next:hover { background: #6e1414; }
+.btn-print {
+  padding: 10px 22px; background: var(--green); border: none; color: #fff;
+  font-size: 13px; font-weight: 600; font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer; letter-spacing: 1px; border-radius: 2px;
+}
+
+/* ══ STEP 2: SIGN ══ */
+#step2 { display: none; }
+#step2.show { display: block; }
+.sign-card {
+  max-width: 600px; margin: 0 auto;
+  background: var(--card); border: 1px solid var(--rule);
+  border-top: 4px solid var(--green);
+  box-shadow: 3px 3px 0 rgba(0,0,0,.07); padding: 32px 36px 36px;
+}
+.sign-infobar {
+  background: #f0ece4; border: 1px solid var(--rule); border-radius: 3px;
+  padding: 10px 14px; margin-bottom: 20px; font-size: 13px;
+  display: flex; gap: 20px; flex-wrap: wrap;
+}
+.sign-infobar span { color: var(--light); }
+.sign-infobar strong { color: var(--ink); margin-left: 3px; }
+.sign-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.sign-tools label { font-size: 11px; color: var(--light); }
+.col-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color .15s; }
+.col-btn.on { border-color: var(--accent); }
+.sz-btn { padding: 3px 10px; font-size: 11px; background: transparent; border: 1.5px solid var(--rule); cursor: pointer; color: var(--light); border-radius: 2px; }
+.sz-btn.on { border-color: var(--ink); color: var(--ink); font-weight: 700; }
+.canvas-wrap { position: relative; border: 1.5px solid var(--rule); background: #fff; cursor: crosshair; touch-action: none; border-radius: 3px; }
+.canvas-wrap canvas { display: block; width: 100%; }
+.canvas-ph { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #ccc; pointer-events: none; letter-spacing: 2px; transition: opacity .25s; }
+.canvas-ph.hidden { opacity: 0; }
+.sign-hint { font-size: 11px; color: var(--light); margin: 6px 0 18px; }
+
+/* ══ STEP 3: PREVIEW ══ */
+#step3 { display: none; }
+#step3.show { display: block; }
+.preview-bar { max-width: 600px; margin: 0 auto 14px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── PRINT DOC ── */
+.pdoc {
+  max-width: 600px; margin: 0 auto;
+  background: #fff; border: 1px solid #ccc;
+  padding: 28px 32px; font-size: 13px; color: #111;
+  font-family: 'Noto Sans TC', sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+}
+.pdoc-hd { display: flex; align-items: center; gap: 14px; border-bottom: 2.5px solid #111; padding-bottom: 10px; margin-bottom: 8px; }
+.pdoc-logo { flex-shrink: 0; width: 52px; height: 52px; border: 1.5px solid #555; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pdoc-logo .ico { font-size: 14px; }
+.pdoc-logo .en  { font-size: 7px; letter-spacing: 1px; color: #555; font-weight: 700; }
+.pdoc-logo .zh  { font-size: 6px; color: #777; text-align: center; line-height: 1.4; }
+.pdoc-tw { flex: 1; text-align: center; }
+.pdoc-tw .co  { font-family: 'Noto Serif TC', serif; font-size: 18px; font-weight: 700; letter-spacing: 4px; }
+.pdoc-tw .sub { font-size: 11px; color: #666; letter-spacing: 3px; margin-top: 3px; }
+.pbar { background: #f0f0f0; border: 1px solid #ccc; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 2px; padding: 4px; margin: 8px 0; }
+.pr { display: flex; margin-bottom: 7px; gap: 6px; align-items: flex-end; }
+.pl { font-size: 12px; color: #555; white-space: nowrap; min-width: 78px; }
+.pv { font-size: 13px; border-bottom: 1px solid #999; flex: 1; padding-bottom: 2px; min-height: 20px; word-break: break-all; }
+.pamt-box { border: 1px solid #ccc; margin: 8px 0; }
+.pamt-hd { background: #f0f0f0; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ccc; font-size: 11px; font-weight: 600; text-align: center; }
+.pamt-hd div { padding: 5px; }
+.pamt-hd div:first-child { border-right: 1px solid #ccc; }
+.pamt-in { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ccc; }
+.pamt-note { padding: 7px 8px; font-size: 11px; line-height: 1.8; border-right: 1px solid #ccc; white-space: pre-line; }
+.pamt-val  { display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+.pded { display: grid; grid-template-columns: repeat(3,1fr); }
+.pded div { text-align: center; padding: 5px 3px; border-right: 1px solid #ccc; font-size: 11px; }
+.pded div:last-child { border-right: none; }
+.pded .dr { color: #555; font-size: 10px; }
+.pded .dn { font-weight: 600; font-size: 13px; }
+.pdiv { border: none; border-top: 1px solid #ccc; margin: 8px 0; }
+.ptbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+.ptbl th, .ptbl td { border: 1px solid #ccc; padding: 5px 7px; text-align: center; vertical-align: middle; }
+.ptbl th { background: #f0f0f0; font-weight: 600; font-size: 11px; letter-spacing: 1px; }
+.ptbl td { height: 62px; }
+.psig { max-height: 54px; max-width: 140px; object-fit: contain; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: #fff; padding: 10px 16px; font-size: 13px; opacity: 0; transform: translateY(8px); transition: all .3s; pointer-events: none; z-index: 999; border-radius: 2px; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+
+/* ══ STEP 2: PREVIEW + SHARE ══ */
+.preview-card { max-width:600px; margin:0 auto; background:var(--card); border:1px solid var(--rule); border-top:4px solid var(--accent); box-shadow:3px 3px 0 rgba(0,0,0,.07); padding:32px 36px 36px; }
+
+/* share bar */
+.share-bar { max-width:600px; margin:0 auto 14px; display:flex; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+.share-bar-left { display:flex; gap:10px; }
+.btn-line { padding:10px 20px; background:#06C755; border:none; color:#fff; font-size:13px; font-weight:600; font-family:'Noto Sans TC',sans-serif; cursor:pointer; border-radius:4px; display:flex; align-items:center; gap:6px; }
+.btn-mail { padding:10px 20px; background:#4a86c8; border:none; color:#fff; font-size:13px; font-weight:600; font-family:'Noto Sans TC',sans-serif; cursor:pointer; border-radius:4px; display:flex; align-items:center; gap:6px; }
+.btn-line:hover { background:#05a847; }
+.btn-mail:hover { background:#3a70aa; }
+
+/* signature overlay on preview */
+.sig-overlay-wrap { position:relative; margin:16px 0; }
+.sig-overlay-hint { text-align:center; font-size:11px; color:var(--light); margin-bottom:6px; letter-spacing:.5px; }
+.sig-overlay-box {
+  position:relative; border:2px dashed #e07b1a;
+  background:rgba(253,243,231,.5); min-height:130px;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; border-radius:3px; cursor:pointer;
+}
+.sig-overlay-wm {
+  font-family:'Noto Serif TC',serif; font-size:32px; font-weight:700;
+  color:rgba(224,123,26,.15); letter-spacing:10px;
+  pointer-events:none; user-select:none; position:absolute;
+}
+.sig-overlay-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+.sig-overlay-signed img { max-height:100px; max-width:90%; object-fit:contain; }
+
+/* sign panel (shown after clicking sign box) */
+.sign-panel { display:none; margin-top:10px; background:#fff; border:1px solid var(--rule); border-radius:3px; padding:14px; }
+.sign-panel.show { display:block; }
+.sign-panel-tools { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+
+/* vendor mode (full page sig) */
+#vendor-mode { display:none; }
+#vendor-mode.show { display:block; }
+.vendor-card { max-width:600px; margin:0 auto; background:var(--card); border:1px solid var(--rule); border-top:4px solid #06C755; box-shadow:3px 3px 0 rgba(0,0,0,.07); padding:32px 36px 36px; }
+.vendor-infobar { background:#f0ece4; border:1px solid var(--rule); border-radius:3px; padding:10px 14px; margin-bottom:16px; font-size:13px; display:flex; gap:16px; flex-wrap:wrap; }
+.vendor-infobar span { color:var(--light); }
+.vendor-infobar strong { color:var(--ink); margin-left:3px; }
+.vendor-sig-wrap { position:relative; border:2px dashed #06C755; background:#f8fff8; border-radius:3px; touch-action:none; }
+.vendor-sig-wrap canvas { display:block; width:100%; }
+.vendor-sig-ph { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:'Noto Serif TC',serif; font-size:28px; font-weight:700; color:rgba(6,199,85,.15); letter-spacing:8px; pointer-events:none; user-select:none; transition:opacity .3s; }
+.vendor-sig-ph.hidden { opacity:0; }
+
+/* pdf-only class for print layout */
+@media print {
+  body { background:#fff !important; padding:0 !important; }
+  .steps, .share-bar, .sign-panel, #step1, #step2, #vendor-mode, .toast { display:none !important; }
+  #step3:not(.print-active) { display:none !important; }
+  #step3.print-active { display:block !important; }
+  .pdoc { box-shadow:none !important; border:none !important; padding:6px !important; max-width:100% !important; }
+  .btn-print, .btn-ghost { display:none !important; }
+}
+/* ── PRINT ── */
+@media print {
+  body { background: #fff !important; padding: 0 !important; }
+  .steps, .preview-bar, #step1, #step2, .toast { display: none !important; }
+  #step3 { display: block !important; }
+  .pdoc { box-shadow: none !important; border: none !important; padding: 6px !important; max-width: 100% !important; }
+  .btn-print, .btn-ghost { display: none !important; }
+}
+@media (max-width: 520px) {
+  .card, .sign-card, .pdoc { padding: 20px 16px 24px; }
+  .amt-row { flex-direction: column; align-items: stretch; }
+  .amt-eq { display: none; }
+  .bank-row { flex-direction: column; }
+  .bank-row .bcode { flex: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- STEPS -->
+<div class="steps">
+  <div class="step active" id="s1"><div class="step-dot">1</div><div class="step-lbl">填寫資料</div></div>
+  <div class="step pending" id="s2i"><div class="step-dot">2</div><div class="step-lbl">電子簽名</div></div>
+  <div class="step pending" id="s3i"><div class="step-dot">3</div><div class="step-lbl">確認 / 列印</div></div>
+</div>
+
+<!-- ══ STEP 1 ══ -->
+<div class="card" id="step1">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div style="flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:2px;"><img src="data:image/png;base64,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" style="height:62px;object-fit:contain;"></div>
+    <div class="doc-titles">
+      <div class="co">裸肌股份有限公司</div>
+      <div class="sub">勞務報酬單　LABOUR FEE STATEMENT</div>
+    </div>
+  </div>
+
+  <!-- 1. 姓名 -->
+  <div class="item">
+    <div class="item-no">1</div>
+    <div class="item-body">
+      <div class="item-label">姓名 <span class="req">*</span></div>
+      <input type="text" id="f-name" placeholder="請輸入收款人姓名">
+    </div>
+  </div>
+
+  <!-- 2. 身分證字號 -->
+  <div class="item">
+    <div class="item-no">2</div>
+    <div class="item-body">
+      <div class="item-label">身分證字號 <span class="req">*</span></div>
+      <input type="text" id="f-pid" placeholder="A123456789" maxlength="10" oninput="lookupID(this)">
+      <div class="af" id="af">
+        <span>✓ 找到紀錄：</span><strong id="af-name"></strong>
+        <button class="yes" onclick="applyAF()">自動帶入</button>
+        <button class="no" onclick="hideAF()">略過</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 連絡電話 -->
+  <div class="item">
+    <div class="item-no">3</div>
+    <div class="item-body">
+      <div class="item-label">連絡電話</div>
+      <input type="tel" id="f-phone" placeholder="0912-345-678" oninput="fmtPhone(this)" maxlength="13">
+    </div>
+  </div>
+
+  <!-- 4. 工作內容 -->
+  <div class="item">
+    <div class="item-no">4</div>
+    <div class="item-body">
+      <div class="item-label">工作內容 <span class="req">*</span></div>
+      <div class="work-row">
+        <select id="f-work-sel" onchange="onWorkSel(this)">
+          <option value="">請選擇工作項目</option>
+          <option value="拍攝與剪輯影片">拍攝與剪輯影片</option>
+          <option value="文案撰寫">文案撰寫</option>
+          <option value="顧問諮詢">顧問諮詢</option>
+          <option value="分潤">分潤</option>
+          <option value="__other__">其他（手動輸入）</option>
+        </select>
+        <input type="text" id="f-work-custom" placeholder="請輸入工作內容">
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 應付金額 -->
+  <div class="item">
+    <div class="item-no">5</div>
+    <div class="item-body">
+      <div class="item-label">應付金額（元）<span class="req">*</span></div>
+      <div class="amt-row">
+        <input type="text" id="f-amount" placeholder="例：50,000" oninput="calcAmt(this)">
+        <div class="amt-eq">=</div>
+        <div class="amt-result" id="f-actual">—</div>
+      </div>
+      <div class="ded" id="ded">
+        <div class="ded-cell"><div class="dr">2.11%</div><div class="da" id="d-nhi">—</div><div class="dl">二代健保補充費</div></div>
+        <div class="ded-cell"><div class="dr">5%</div><div class="da" id="d-5">—</div><div class="dl">固定人員扣稅</div></div>
+        <div class="ded-cell"><div class="dr">10%</div><div class="da" id="d-10">—</div><div class="dl">執行業務扣稅</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 所得格式代號 -->
+  <div class="item">
+    <div class="item-no">6</div>
+    <div class="item-body">
+      <div class="item-label">所得格式代號</div>
+      <div class="radio-row">
+        <label><input type="radio" name="tax" value="50"> ○50　薪資所得</label>
+        <label><input type="radio" name="tax" value="9A"> ○9A　執行業務</label>
+        <label><input type="radio" name="tax" value="9B"> ○9B　稿費</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 地址資料 -->
+  <div class="item">
+    <div class="item-no">7</div>
+    <div class="item-body">
+      <div class="item-label">戶籍地址</div>
+      <input type="text" id="f-addr-reg" placeholder="請輸入戶籍地址" style="margin-bottom:8px;">
+      <div class="item-label" style="margin-bottom:6px;">
+        通訊地址
+        <label style="font-size:12px;font-weight:400;color:var(--light);margin-left:10px;cursor:pointer;">
+          <input type="checkbox" id="same-addr" onchange="syncAddr()"> 同戶籍地址
+        </label>
+      </div>
+      <input type="text" id="f-addr-mail" placeholder="請輸入通訊地址">
+    </div>
+  </div>
+
+  <!-- 8. 支付方式 -->
+  <div class="item">
+    <div class="item-no">8</div>
+    <div class="item-body">
+      <div class="item-label">支付方式</div>
+      <div class="radio-row" style="margin-bottom:10px;">
+        <label><input type="radio" name="pay" value="cash"     onchange="toggleBank()"> 現金</label>
+        <label><input type="radio" name="pay" value="transfer" onchange="toggleBank()" checked> 銀行轉帳</label>
+        <label><input type="radio" name="pay" value="check"    onchange="toggleBank()"> 掛號支票</label>
+      </div>
+      <div class="bank-row" id="bank-row">
+        <div class="bcode">
+          <div class="item-hint" style="margin-bottom:5px;">銀行代碼</div>
+          <select id="f-bcode"><option value="">請選擇銀行</option></select>
+        </div>
+        <div class="bacc">
+          <div class="item-hint" style="margin-bottom:5px;">帳號</div>
+          <input type="text" id="f-bacc" placeholder="請輸入帳號" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. 日期 -->
+  <div class="item" style="border-bottom:none;">
+    <div class="item-no">9</div>
+    <div class="item-body">
+      <div class="item-label">填單日期 <span class="req">*</span></div>
+      <input type="date" id="f-date" style="max-width:200px;">
+    </div>
+  </div>
+
+
+
+  <div class="actions">
+    <button class="btn-ghost" onclick="clearForm()">清除重填</button>
+    <button class="btn-next"  onclick="toStep2()">前往電子簽名</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 2: 勞報單預覽 + 發送簽名 ══ -->
+<div id="step2">
+  <!-- 操作列 -->
+  <div class="share-bar" style="flex-direction:column;gap:8px;">
+    <div style="font-size:12px;color:var(--light);text-align:center;">📋 確認內容無誤後，點下方按鈕發送簽名邀請給廠商，或直接在頁面上簽名</div>
+    <div style="display:flex;gap:10px;justify-content:space-between;width:100%;flex-wrap:wrap;">
+    <button class="btn-ghost" onclick="toStep1()">← 返回修改</button>
+    <div class="share-bar-left">
+      <button class="btn-line" onclick="shareViaLine()">📱 LINE 發送簽名邀請</button>
+      <button class="btn-mail" onclick="shareViaMail()">✉️ Email 發送簽名邀請</button>
+    </div>
+    </div>
+  </div>
+
+  <div class="preview-card">
+    <!-- 勞報單內容（同 step3）-->
+    <div class="pdoc-hd">
+      <div id="s2-logo-wrap"></div>
+      <div class="pdoc-tw"><div class="co">裸肌股份有限公司</div><div class="sub">勞務報酬單</div></div>
+    </div>
+    <div class="pbar">支領內容摘要</div>
+    <div class="pr"><span class="pl">茲証明</span><span class="pv" id="s2p-name"></span><span style="font-size:12px;white-space:nowrap;border-bottom:1px solid #999;padding-bottom:2px;align-self:flex-end;">確實領取下列款項無誤</span></div>
+    <div class="pr"><span class="pl">工作內容：</span><span class="pv" id="s2p-work"></span></div>
+    <div class="pamt-box">
+      <div class="pamt-hd"><div>代扣二代健保 / 廢棄</div><div>實付金額</div></div>
+      <div class="pamt-in">
+        <div class="pamt-note" id="s2p-ded-note"></div>
+        <div class="pamt-val"  id="s2p-actual"></div>
+      </div>
+      <div class="pded">
+        <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="s2p-nhi"></div></div>
+        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="s2p-d5"></div></div>
+        <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="s2p-d10"></div></div>
+      </div>
+    </div>
+    <div style="font-size:12px;margin:6px 0;">所得格式代號：<span id="s2p-taxcode"></span></div>
+    <hr class="pdiv">
+    <div class="pr"><span class="pl">應付新台幣：</span><span class="pv" id="s2p-amt-text"></span></div>
+    <div class="pr"><span class="pl">支領方式：</span><span class="pv" id="s2p-pay"></span></div>
+    <div class="pr"><span class="pl">所得者姓名：</span><span class="pv" id="s2p-bname"></span><span class="pl" style="margin-left:8px;">身分證字號：</span><span class="pv" id="s2p-pid"></span></div>
+    <div class="pr"><span class="pl">銀行帳號：</span><span class="pv" id="s2p-bacc"></span></div>
+    <div class="pr"><span class="pl">戶籍地址：</span><span class="pv" id="s2p-areg"></span></div>
+    <div class="pr"><span class="pl">通訊地址：</span><span class="pv" id="s2p-amail"></span></div>
+    <div class="pr"><span class="pl">聯絡電話：</span><span class="pv" id="s2p-phone"></span></div>
+    <hr class="pdiv">
+    <!-- 簽名區 -->
+    <div style="font-size:12px;font-weight:600;margin-bottom:6px;letter-spacing:.5px;">所得人簽名欄</div>
+    <div class="sig-overlay-wrap">
+      <div class="sig-overlay-hint">點擊下方簽名區開始簽名，或透過上方按鈕發送給廠商簽名</div>
+      <div class="sig-overlay-box" id="sig-overlay-box" onclick="openSignPanel()">
+        <div class="sig-overlay-wm">此 處 簽 名</div>
+        <img id="sig-preview-img" src="" style="display:none;max-height:100px;max-width:90%;object-fit:contain;position:relative;z-index:1;">
+      </div>
+      <!-- 簽名工具面板 -->
+      <div class="sign-panel" id="sign-panel">
+        <div class="sign-panel-tools">
+          <label style="font-size:11px;color:var(--light);">顏色</label>
+          <div class="col-btn on" style="background:#1a1a2e;" data-c="#1a1a2e" onclick="setPenC(this)"></div>
+          <div class="col-btn"   style="background:#8b1a1a;" data-c="#8b1a1a" onclick="setPenC(this)"></div>
+          <div class="col-btn"   style="background:#1a4a8b;" data-c="#1a4a8b" onclick="setPenC(this)"></div>
+          <span style="width:1px;height:18px;background:var(--rule);margin:0 4px;display:inline-block;"></span>
+          <label style="font-size:11px;color:var(--light);">粗細</label>
+          <button class="sz-btn"    data-s="1.5" onclick="setPenC2(this)">細</button>
+          <button class="sz-btn on" data-s="2.5" onclick="setPenC2(this)">中</button>
+          <button class="sz-btn"    data-s="4"   onclick="setPenC2(this)">粗</button>
+        </div>
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas id="sig-canvas" height="140"></canvas>
+          <div class="canvas-ph" id="canvas-ph">請在此處簽名</div>
+        </div>
+        <div style="font-size:11px;color:var(--light);margin:6px 0 10px;">支援滑鼠拖曳或觸控筆 / 手指書寫</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn-ghost" onclick="clearSig()">清除</button>
+          <button class="btn-ghost" onclick="closeSignPanel()">取消</button>
+          <button class="btn-next" onclick="confirmSig()">確認簽名 →</button>
+        </div>
+      </div>
+    </div>
+    <div id="after-sig-actions" style="margin-top:10px;display:none;gap:10px;justify-content:flex-end;">
+      <button class="btn-print" id="btn-download-pdf" onclick="downloadPDF()" style="display:none;">📥 下載 PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VENDOR MODE: 廠商簽名頁 ══ -->
+<div id="vendor-mode">
+  <div class="vendor-card">
+    <div class="doc-header" style="margin-bottom:16px;">
+      <div id="v-logo-wrap"></div>
+      <div class="doc-titles"><div class="co">裸肌股份有限公司</div><div class="sub">勞務報酬單　— 收款人簽名</div></div>
+    </div>
+    <div class="vendor-infobar">
+      <div><span>收款人</span><strong id="v-name">—</strong></div>
+      <div><span>金額</span><strong id="v-amt">—</strong></div>
+      <div><span>日期</span><strong id="v-date">—</strong></div>
+    </div>
+    <!-- 完整預覽 -->
+    <div id="v-preview-body" style="margin-bottom:16px;font-size:13px;"></div>
+    <!-- 大簽名框 -->
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;letter-spacing:.5px;color:var(--ink);">請在下方簽名 <span style="font-size:11px;font-weight:400;color:var(--light);">（支援手指 / 觸控筆書寫）</span></div>
+    <div class="vendor-sig-wrap" id="vendor-sig-wrap">
+      <canvas id="vendor-canvas" height="220"></canvas>
+      <div class="vendor-sig-ph" id="vendor-sig-ph">此　處　簽　名</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="clearVendorSig()">重新簽名</button>
+      <button class="btn-next" onclick="confirmVendorSig()">確認並下載 PDF</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ STEP 3 ══ -->
+<div id="step3">
+  <div class="preview-bar">
+    <button class="btn-print" onclick="window.print()">📄 儲存 / 列印 PDF</button>
+  </div>
+  <div class="pdoc">
+    <div class="pdoc-hd">
+      <div style="flex-shrink:0;width:100px;height:56px;background:#fff;display:flex;align-items:center;justify-content:center;padding:2px;"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAC2AdkDASIAAhEBAxEB/8QAHAABAAEFAQEAAAAAAAAAAAAAAAcBBAUGCAID/8QARBAAAQMDAgMEBQoEBAUFAAAAAQACAwQFEQYSByExE0FRYRQXInGiCBUjMjZTc4GRkjVDcrEzNGKhFhgkQlJUgpPB0f/EABsBAQADAQEBAQAAAAAAAAAAAAAEBQYDAgEH/8QAMREAAQQBAQgABAUFAQAAAAAAAAECAwQRBRITFSExQVFSBjJCcRQkNLHwYYGhwfEi/9oADAMBAAIRAxEAPwDstERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEXieRsUbnuIAAyowuHE+eGslhhponNY8tyc9xUS1ehq43q4ySK9WWwqpGmcEpIom9aVb/AOkh/UoeKdaB/k4f1Kh8cp+xL4Rb9SWUWv6LvdRe7e2qnibHuGRhbArOKVsrEe3opXvY6Nytd1QIiLoeAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAKmVU9F4kcGsc49GglAes+SblpFy4hWyjrX0ziSWdfZVt6y7X5/tKgLqlRq4V6Exun2XJlGKSBuVcqPvWXa/P9pXuLiTbHyNbkjccfVXzitT3Q+rp1pPoU30lA7OeSxlyu0NHaxXnLoy3dyGe5al6zLXjPP8AaV0mvQQqiSOwcoqk0yKrG5wSBuTco/8AWXa/P9pT1l2vz/aVz4rU90OvDbXopIG5A7py6qP/AFlWvz/asjp7XFDebhHSQAlzzj6q+s1Ks9yNa9FVTy+hYY1XOYuENvyhK+NbUMpaaSeQ4axpJ/JaM7iXat5Azy/0rrPchgVEldjJzhrSz53bcm/7k3KP/WXa/P8AaU9Zdr8/2lceK1PdDtw216KSBu8lXK0qya+ttyuDaRrsFw5ZGFuE0ojgdL1AGVIhtRTtV0a5RCPNBJC7ZemFPrlU3LRariNbqeqkgcDuY7B9lfH1l2vz/aVH4pURcK9CQmnWVTKMUkDKrlR4eJtsBAGf2lbdpy8017oW1dM7LSSOi6wXoJ3bMbsqcpak0LdqRuEMqqE+SqqKWRzWuI9wbRabnw7bI5vsjPNQNI7fI556uOSt94xXc1NyioonYbDlrwCtA81gtes76zsp0byNlo1fdV9peq8yuF9rdTvqq+CBrS7dI0H3ZXxW8cJLP6XeTWSjMTWkDlyyq6lXWzM2NO5OtzpBC55LFit8VstsNJGBhgxyV/nmsXqK80tkt76qpdgNGQMdVqY4m2ojPP8AaV+gSXK9bEbnIhiI608+Xtaqkgbk3KP/AFl2vz/aU9Zdr8/2leeK1PdDpw216KSBuTIUfniXawO/9pQcTLUXNHP2iAPZKcVqe6Dh1n0UkHKoSra31TKujZUs+q4ZWo3TiDbqKvmpJM7o3bT7K7y24YWo57sIpwiryyuVrEyqG77k3KP/AFl2vz/aUPEy1gZOf2lcOK1PdDvw216KSDlUysHp/UVLd7Q+vgyWtznl4LX6riPboKl8DxzYcH2V0kvQRtRznYRehzZTne5WtbzTqb5uTco/9Zdr8/2lPWXa/P8AaVz4rU90OnDbXopIGfJVWs6X1bQXycwU7j2gGcY7lshUuGZkzdpi5QiyRPidsvTCnpERdTwEREAREQBERAEREAREQBERAEREAVhfahtJa55XnA2Ef7FX56LTeLNaKbS8jGOxI57cDyUe3JuoXP8ACHavHvJWs8qQrVPMtXLI85Jcef5r54HgqNzzz381VfmDlyuT9DRMJhBgeCpkAhx7jlVVC0EYK+H0mfQNa2+aOfSyuDpSHNwe4KJtQUTrfeKmkc3DY34Hmti4VXb5uvhge7EcoDWjzWV4x2cxVkNdA32HgmQ+eVorOLlBsqfMzkv2KGv+UvOi+l3QjvA8EwPBEWdL4YUgcFKITXCpqXMx2JBafFR+enJTVwkoBTaejqiPanaCVcaHDvLaL45lVrMu7rKnnkXnEyvNDpx7muAL3bf1UDtaAT5qUONlcNkdAHYJ2vUYN6c101+beWtnshz0SLYr7XkrgeCYHgiKjLk90kjqerinjOC14OfLK6G0vcG3Syw1Qw7IwfyXOpUo8Grw4sltkxwyNuWHPUkq/wBAtbqfdr0cUeuV95CkidUNX4mWo27UBeG4bUZetXwPBTRxXtHptkdVRt3TRkAHvA71C5BaS09RyUXWKv4eyuOi8yTpNnf10z1TkUx7lIfB28ej1b7fKfoyMt95Kjzqr+wVhoLtT1G4ta14Lvco1Cwtedr0JF6BJ4HNOkQVbXOobTUE07iBsYSvNrqW1tDDVsPsyN3BarxZuhobE2NjsOldtIz3L9CsWEigdL2wYaCFZJkj75Iiv9Z6ffKur3ZEj8hWRVGgDoFUr80e9XuVy9z9BYxGNRqdinMuAAJJ7lO/Di1fNmn2BzcOk9v9VEmhbYbnqOmie3MO72z4Kda57LfaZHbtoihO38gtN8PV0ajrDuxnddnVVbChGXGG7sqKyO3xO5wkh4z1UeYHgrq715ud0mrCSXSOycq1VDesLYndIXVKDcQNYMDwTA8EVO/CiEsEDwVWAdrFy/mN/unZz88QyED/AElIWTmeIOgkA3j/ALT4r21q5TkeVc1OqnROmP4FB/SoJ1Z9p7j+MVO+mQRYoQRg7VBGrPtNcfxitRrv6WL+djNaJ+ok/ncxmB4KhAx0VUPRZQ05LHC37CVHveovu38VqP61KHC7P/AlRgZ5yKMLzHM241DjC/BdyO0q91BFWnB9iloqiW5s+S2wPBMDwVAeSqqIuTZeGtd6BqZr920SN2c/NTyB3krme3yuhuVNIDgNlaSfzXR1nqW1lviqWnIeM5Wy+G5sxuiXtzMrr8WJGyeS8REWmKAIiIAiIgCIiAIiIAiIgCIiAIiIAok421hNdT0bX+y6PcfeCpbK5+1/WOrtRz7jnsXFgVF8QTburs+S40SLbs7Xg18KqBFhDZBE7sogPrRTmlrYakE5jcHBSzqu4QXHh22rlIc98YJx1HMqIDz5LJ/O9Q6zvtr3ExnAAyrKjc3DJGO6OT/JX3am+ex6dUX/AAY04zy6Ig6Iq0sD6UkbpqyCJozveB/uuiNMUnoNkpqXbt2NxhQfoii9Pv8ADG3OY3B/6FTvdqoUdvlqCcBgytb8ORbMb5lMvr0m09kSEI8Ta0Vup3P3Z7Nuzry5LWgvvdJHTXSpmc4ndI4j9VbhZq1LvZnP8qaGtHuoWs8IVREUc7lCFldK3CS3XyllDtrO0G/3LFoc45HC6RSLG9Hp1Q5yMSRisXudJfR3G1bsBzZYyR+i581NQOtl8no38iDuH5lTFwyu4uVgbFyzT4j69VqvGiztbLFc4mZkkdtdy7gFrdXYlum2w3qhl9LetW26F3cjgKjgDjOUb059VUrHGsJj4TXn0u0mjkdzpwGt93VaXxYujqvUJp2uzCxoIHmrXhtcvm/UUbXv2wyH2h3FZni3YRBUR3inbiObDdoHLp1WkfPJZ0zDfpXn9jPMgZX1Hn9ScvuaCFR3RAqrNmhJW4MWpsVFJXObkyAFue5XfF+6SU1qbSwu2yOcM+5a5wq1IaOr+bap/wBHIQI8notz4i2Ft7szpYRiVg3hw6kDuWzruSXS1bB1ROZkbCbvUEdN0yQYGgOJA5lelQtfHIY5BhzTzBVVjVTHJTWoueYVYB/1kLiQGh4znwyqKhRFwoXoTjZrhpkW+Nr5qMO28wcZV56fpYEfTUROeWMf/igDbg5HJe4ifSIgBy3j+60LNecmE3aFC7Q2rldtTpqJ8T4A6EtLCOW3oueNWfaa4/jFTtpf+Aw+5QTqz7TXH8YqZ8QO2q8bvJF0JuzO9P6f7MYh6Ih6LImpJi4MDOlwCAR2ruR962m9WekrKGaLsIg5w67QtX4LfZgfiu/ut7cMtcPEL9D06NslJiOTsYS+9W23qnk5lrIjDWzxkEbZXAfqvmtj4k0Atup5I252OaH9O881rgORlYKxEsUrmL2U2teVJYmvTugyWncO5TnwurvStL00ZOTGzmoKeRjmpN4I15D6qjkPsjAYrXQJt3a2V78it1uLbrbXglVERb0xoREQBERAEREAREQBERAEREATvRUPVAWGoqn0Sy1VRnGyPK52uM3pFfNPn67yVM/FW4eh6ffD3ztLVCA5gErGfEk21K2PwarQIsRuk8lQgGXBviQEVxbIDVXCGBp5l4P6FZxjdpyIheucjWqqm23XS/YaLp6yNh7YPc6TP/jgLSWnIBXRFRRQ1mnnUILTuhAGO44UBXeldQ3OopCP8J+1Xes0WwbD2dFQqNIurPtMcvNFyWqICioi6CoTjkqry7ORzQEh8E6HN0lrtuW7C3n4rdOJta2k0tVNzh72eyrPhHQGl0/vcMOc8n8isHxurOdJSsOQch4WzZ+T0pfKp+5kX/mtSx2z+xGRJedx6lEHRUysYa0+1HGZqyCIAkPka0+4lbZxG05FZmUstK12yTrnn3Ky4cUbazUkbZWgsa0u5+IUqa+tbLjpuctw+SKMlmPFX1DT0npyP79v7FJdu7m2xvbv/cgcKjhkYVXtdHI6Nww5pwU71RdFLvPI27hTeTQXxtHISIZMk+9SrrG2sutgnjDcv2Ex+9QBSTPp6mOVjiC1w/uuhtL18dys0M7XBwI2n8gtZoMyTQvrvMxrUKwytnac8TwOpaiSmf8AXjdtd714W1cTbQbbf3zsb7NSS8laqszZhWCV0a9jQ1pkmia9O5VjnMka9hwQQcqcrU+HU+jwx4a5wZsbnuIGMqDFIXBy7uirJLbLIez2lzQfEqz0SwjJlid0dyK/WIFfCkjereZpF6ts1quc9JKD9G7APcVaKWOLlg9IpBdKduHRAl4A+solBOcY6KJqNNas6s7diVp9tLMKO7p1KtmkhkDoiWvHR3gp20Bfor1Z2RyEdqxuwg94AUEbeZyVmtG3qps93jla4mNxDXDPLBXbSby1Zufyr1OOp0ktRcvmTobHxT006jrnXSmZ9FKSX4HJoWhMduBx3Loqrhpb/YnR8jFOzGVA2obXNabpLTPYWt3EtPkpWt0EifvmfK79yPo91ZWLE/5k/YsF5eSByXpVZznibjIc9oP5lUKJlcF0q4TJ8ySMkqkb81EWMtO8dfepqtGi7HNb4pJYoS8jOSrj/gWw7g4xQkg5Cvo9AsOw7KFI7XIEymFM3pf+Awf0/wD0oJ1Z9prj+MV0JS08dLSiCIAMaOWFz3qz7TXH8Yqf8QNVleNq9iFoTtqd6/0/2YxD0RD0WRNSTHwW+zA/Fd/db4VoXBhzW6XBc4D6V3U+a3rtY/8AzZ+q/RtKX8oz7GC1H9U/7kWcaqHZKy4beuGZUaRklgJU7cSqGO46eeAWkxZf1UExcmBZTXodi0rvJpdEl262yvYqVs3DGuNJqumjJwyV4BWtL726oNJWx1LfrMOQqyrLuZmv8KWNmPewuZ5Q6XaQRuByCvQVjZZhPaqaUHO6NpP6K+HRfpzF2kRfJ+eqmFwERF6PgREQBERAEREAREQBERAEKLxM4Mjc8/8AaCV8UET8bK7fU01I1w+jecj8lHQWf4iVYrtU1EodloIwsAOi/N9Tm31p7k8m806LdVmNC9Me6N29hLXDvC8oVARcdCabvws1BLBe3w1k73tmaGMDnE4OfNffjBafR6+KshZ9HI0ukcB35WjW2b0Ouiqh/LduUzXiOPUuhGuYA6V0YcfLqtFSd+MpvrqvNOaFDbalS2ydvJF5KQk1oBzlel6kb2cr4+9riP0XlZ5covMvkx2C9wwunmbEwZcSvCzmgqR1Xquji25jLvaK6QRrJI1id1Oc0iRxuevZCctP07aOzU7AMDs2k/ooZ4n1hqtU1MW7LYn+ypqubhTWeZwOOzhOPyC50uVSay4S1RduMhyStV8QSJHAyFDNaHHtzOlXsfBUPVVRZA1J7pp5aeXtIZHsdjGWnClHhNe3VzZ6CskL9rRjcc55qKysvouvNu1DSyuk2sMg3+YVjplpYJ2qq8uikHUKyTwOwnMueIlpFrvknIhsxL1rzTkKWuLVuFwssV2gZvcA0DHgVEvQ4K+6rW/D2FROi80POmWN9XTPVOSlT0UncGLtntbZI/lG3c3J7yVGJWU0jXutt/gnEhaxzwH+5eNNsrXsNee9Qr/iIHN/uSpxZtLqyyOq4W5liwB7lC3Rxaeo5FdJu7K5WrcAHMlYSFz1qGgdbb1PTPHPcXZ95Vx8RV0RzZm9FKzQbGWuhd2LJX+n6x1Fd6eYEgCQbvcrBUB55BWaY5WORydi/exHtVq9zpGJ1Pd7S15AdFM3OFBWtrI+yXqSItOx/th3dz7lJPCO8enWp1G486YBo5q94k2EXe0OkY36WL2s47gtpdgTUaTZWfMif9MjTmWhbWN3TP8Awg7IVMeBRzHMO2QYcOoVQsT0NenMkvhJqNrB81VMhzybESVm+KGnG3S2GspWj0iPBJHQtHVQ7S1MlHUsqoTiSM5aR3KetG3mC+2NpBDiG7JB4nHNazSrDLsC1JevYzOpQOqTpZj7kAnkS13IjqE6EEdy27ibpz5ouZqoI8U87uQA5BagOizdmu6vKsbuqF/WnbYjR7e5d/OdxaA1tXMGjwkK9xXS49tHtrJ/rjrIfH3qxKqz/Fi/Eb/deUnkyn/pT3uWc+R0Zp2R8tlhfIcuLeZUDas+01x/GKnbTH8Cg/pUE6s+01x/GK0uurmrF/OxnNE/USfzuYxERZQ1B94K2qgj7OGeWNvg15C+nzlXlm30yo/+Qq0Re0leiYRTwsbF5qhdG41zoTG6qmc09QZCVaNAAACqi+Oe53zKfWtRvRAqOGWkKqHovJ6Jz4X1/p2nQc57N2z9FtqizgrXNYZLdu+sS/ClNfo+kzb6oxxgtRi3VlzQiIrEhBERAEREAREQBERAEREAXzqWGSCSMdXMLf1C+iEL4qZQEW1fDSWoqnzvmGXHP1159VzvvfjUp805qqXRqjlyrSxbqtpEwjiLPVc773409VzvvfjUp805pwSn6H3i9v2IsPC9xABl6f6luWkbHLZ7fLSSvD2u5N55wMLYeaYXevpteu7bjbhThPfnnbsvXKEaXThsKqvknjeGtec43YVv6rnfe/GpTPJMri7RqblyrDq3VbTUwjiLPVc77341nNHaJ+Y6/wBJc4OIORzyt3yqZ816i0mrE9HtbzQ8y6nZkarHO5KY7UFFLcLdJSxO2l4IPPCjyPha5uCZRn+tSqVTK7WaEFpUWRM4OVe7NXRUjXBFvqvd978aeq533vxqUwmVG4JT9CTxe37EVnhc4/zfjVTwvfnIlwfHepTz5hOqcFp+h84va9jDxWcHT7bZOd+Gbc58loZ4XHe4iXkST9dSoSFQHzUifTq86JvG5wcIbs8CqrFxki31XO+9+NHcL34GJsEdPbUp9UAKj8Ep+h34tb9jHafoZLdaoaN7txjbtznK1rWGiI73XelsIa8gA88LdeQPVOWeoUyWpFLGkT0yhEisSRP3jV5kW+q533vxqg4Wu+9+NSoCSmfMKHwSn6Ezi9v2NH0do2XT9b2rJMtccuG7K3WRgfE5jhkOGCvfVCFOgrR12bDE5EKad8z9t68yOr7w5jrblNVwPDRIc7d2AFYN4XP75R+9SkNo7wvQPgVCdo9R7lcrepLZqlpiI1HEVu4WuPWX41sOidI1Gn68y9tmEtI27s81uZ81TI8R+q9w6VWhej2NwqHmXUrErFY92UUxmo7RT3m2yUszclzcNPeFH/quduOJeWeXtqVBhOi6WdPr2XbUjcqc4Ls9dMRuwhFnqud978aqzhi4SMcZR7LgfrKUc+YVVHTRaafQd11a37Fpa6U0lAymzktGFoN44currpUVYkA7V5djcpI8lXopU9GGdqMemUQjQW5YHK5i4VSLPVc773409VzvvfjUp580z5qLwSn6Eri9v2Is9VzvvfjT1XO+9+NSnzTmnBKfoOL2/Yiz1XO+9+NPVc77341KfNOacEp+g4vb9iLPVc77341R3C52P8X41KnNV5pwSn6Di9v2ND0doeSxXT03tc+yW43ZW+DoqYVQp1atHWbsRphCFPPJO/beuVCIikHIIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAsNRQS1Flq4adxbM+ItYQcYKgThRxKqbVU6us2pZiJLVUCGAvPN3sg9/XmV0UuUflM6AuTte2+SwRPxdHGWqLB3g45/kgKcDuL19m13dIdTHsqDMhgc4EA+0cdfLC3bhXqG+6w4vagmMrharZVBsIBID2kD8itd48cM5qbh9aqiwwEVzRH2uwc/qjP8AupM+Tlpt1k4f0VXUM211ZEHVGRz3eaA3vVkz6fTFynjOHx0z3NPgQFD/AAC19STWuoN/vVNHLgYE04B/3Kl3WbS7Sd1a0ZJpZAB/7Sua+CfB/TGq6GpqtQ2tsszQCC4kIDc+HOra27ceKi3RVrai3eiSPG2TcM9ym66ktoJXNJBDeoXOvBrTUGm+P81Hb6IwUTaGQAjpldFXb+Hzf0oDk3Q9/vGpL/fI7pqOG3spq6SKMSVfZ+yCcdSuleGsJh0zAPT2V7cHEzJe0DvzXIukLPot2oNQO13Y2VZNfIYjI/b7OThdWcGnaeboqlp9MUjKW2sB7KJrsgIDDcfaHUJ0387aane2tppGOLNxDSwHLuQ78BQ+3inqXiBVWLTtjjkgqWVOy4uLS3azGMg+8Lqa5Ma+3VLS3IMTxj8iuevk72ZtNxj1bKaXs4vR2GM92d5QE/WCikoLTT0s0jpJI2AOcTnJV+g80QEJfKs1HdNO6bintcxikc9jSQ7HV2FH1LrTUWl9Y6eo6W5wXWK5yRMnaybtTGHDJJxnC275ZVNUVWlaeGniMrnSxtLR4F3NbZw54O6KsTKG9U1ojbXOp43F+eYdtB/uUBKTz9G4+RXLmrr9e67i/dLJ88soaSnohNGZKjs8u58uZXUT89m/3Fcm3vQ8es+P99objSF8DbY10Dz0EnNASH8mLWGob9X6jtF52ywWydsVLO3mJG4Bzu7+qlrWN6jsGnK26y/yIXPHmQMqEPkyT1WndR37RlwpnRGlnbFA938wADmFMPEuxSai0bcLZET2skDwzl1JHJAQJpQcRuK8E2pKWsjo7fN7dIGyGMkHxC2TghrzUsGtp9A6wEXpkbHSxPZzBYOnPxWscJ9e3LhXp5mjdTWmSN1vYIopJHY7T3BZDhFZ7/rPi9NxBudBLQUTYHU8TX8w4dxygJ81lbqm7abq7fRzOhnmZtY9rtpB965u1RSaus3EOj0q27SntoBJuM58u/K6pwufuKVPUv8AlDWmRkDjCKIZf3ZyEBKfDuw3SyUz23KqdUF7RtLpNy175St5rrHw6NZb5TFMaqKPcDjAJ5qTYv8ACZ/SFEnysIJKjha6NkZk/wCsi3NHeM80Bp/DxlRcJrdUzatpnTPk5wenDceXTbldEUbSymjYXbiBgnPVcqcLbbwqpq+1VU2noW3uOUFspkOQ7HXH6rqqheySljfGMMc3ICAhOt1NdG/KEqrGJ3ehsZEQ3ce/OVNtUcU0rh1DCR+i5+r6Wf8A5nKyo7M9mY4QHfqugaz/ACk34bv7IDlNvFa/ad4wz01SXz2x5a1/Iu7MZOSfBbbr/XNVPxk0ZS2erLrbcaWSR+x+QcOwOiwGgNKt1Jxb1hbblBmlnt7WMc4cgS5y1SyaQ1FprjpabbXMlkttGHx0TyOQjyOn55QHZVMc08ZPUsH9l9F86X/LRf0D+y+iAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAvhUUdLUSNlngjkez6rnNyQvuiA+M9NBPGI5omSMHRrhkL3BFHDE2KJjWMaMBrRgBe0QHmRjJGFj2hzXDBB6EL40dDR0bS2kpooAeoY3GVcIgLaK30MVUaqOlibORgyBvtY96+72NeCHDIPcV6RAYmTTVgkc50lnonOcckmIcyr6goqShgEFHTRU8Y6NjbgBXCIAQCCCMg9Va0tuoaWd89NSQxSyDD3saAXe9XSIAiIgLWvt9DXtDa2liqAOgkblXLGNY0NaAGgYAHcFVEAVqy3UMdY6sjpIW1DhtdIGjcR4ZV0iAs47Xb46t1XHRwtqHHLpAwbiferxEQGNrrDZq6Xta22UtRJ13SRglXlJSU1JEIqWBkMY6NYMBfZEAVtNb6GaqbVS0sT52jAkc3LgPerlEAXwrqOlroexrKeOePOdj25GV90QGKi03YY5Gyx2ijY9pyHCIZCyjGtY0NaAAOgCqiAtXW6gdWGsNJCag9ZNo3fqrlwBGD0VUQFrT22gpql9TT0kMUzxhz2twSPMpLbqGapZUy0kL5mfVe5uSPzV0iAAADA6IiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiID/9k=" style="height:50px;object-fit:contain;"></div>
+      <div class="pdoc-tw"><div class="co">裸肌股份有限公司</div><div class="sub">勞務報酬單</div></div>
+    </div>
+    <div class="pbar">支領內容摘要</div>
+    <div class="pr"><span class="pl">茲証明</span><span class="pv" id="p-name"></span><span style="font-size:12px;white-space:nowrap;border-bottom:1px solid #999;padding-bottom:2px;align-self:flex-end;">確實領取下列款項無誤</span></div>
+    <div class="pr"><span class="pl">工作內容：</span><span class="pv" id="p-work"></span></div>
+    <div class="pamt-box">
+      <div class="pamt-hd"><div>代扣二代健保 / 廢棄</div><div>實付金額</div></div>
+      <div class="pamt-in">
+        <div class="pamt-note" id="p-ded-note"></div>
+        <div class="pamt-val"  id="p-actual"></div>
+      </div>
+      <div class="pded">
+        <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="p-nhi"></div></div>
+        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="p-d5"></div></div>
+        <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="p-d10"></div></div>
+      </div>
+    </div>
+    <div style="font-size:12px;margin:6px 0;">
+      所得格式代號：○50（薪資）&nbsp;○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      <span style="font-weight:700;color:#e07b1a;">已選：</span><span id="p-taxcode"></span>
+    </div>
+    <hr class="pdiv">
+    <div class="pr"><span class="pl">應付新台幣：</span><span class="pv" id="p-amt-text"></span></div>
+    <div class="pr"><span class="pl">支領方式：</span><span class="pv" id="p-pay"></span></div>
+    <div class="pr"><span class="pl">所得者姓名：</span><span class="pv" id="p-bname"></span><span class="pl" style="margin-left:8px;">身分證字號：</span><span class="pv" id="p-pid"></span></div>
+    <div class="pr"><span class="pl">銀行帳號：</span><span class="pv" id="p-bacc"></span></div>
+    <div class="pr"><span class="pl">戶籍地址：</span><span class="pv" id="p-areg"></span></div>
+    <div class="pr"><span class="pl">通訊地址：</span><span class="pv" id="p-amail"></span></div>
+    <div class="pr"><span class="pl">聯絡電話：</span><span class="pv" id="p-phone"></span></div>
+    <hr class="pdiv">
+    <table class="ptbl">
+      <thead><tr><th>日　期</th><th>經辦人 / 主管</th><th>（簽章）</th><th>所得人簽名（簽章）</th></tr></thead>
+      <tbody><tr>
+        <td id="p-date"></td><td></td><td></td>
+        <td><img class="psig" id="p-sig" src="" style="display:none;"></td>
+      </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── INIT ──
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+
+// Bank list
+const BANKS = [
+  ['003','交通銀行'],['004','臺灣銀行'],['005','土地銀行'],['006','合作金庫'],
+  ['007','第一銀行'],['008','華南銀行'],['009','彰化銀行'],['011','上海商銀'],
+  ['012','台北富邦'],['013','國泰世華'],['015','中國輸出入銀行'],['016','高雄銀行'],
+  ['017','兆豐國際商銀'],['018','農業金庫'],['021','花旗（台灣）銀行'],
+  ['022','美國銀行'],['039','澳盛銀行'],['050','臺灣企銀'],
+  ['052','渣打國際商銀'],['053','台中銀行'],['054','京城商銀'],
+  ['081','匯豐（台灣）銀行'],['101','瑞興商銀'],['102','華泰商銀'],
+  ['103','臺灣新光商銀'],['108','陽信商銀'],['118','板信商銀'],
+  ['147','三信商銀'],['700','中華郵政'],['803','聯邦銀行'],
+  ['805','遠東商銀'],['806','元大銀行'],['807','永豐銀行'],
+  ['808','玉山銀行'],['809','凱基銀行'],['810','星展（台灣）銀行'],
+  ['812','台新銀行'],['815','日盛銀行'],['816','安泰銀行'],
+  ['822','中國信託'],['823','將來銀行'],['824','連線商業銀行'],['826','樂天國際商銀'],
+];
+(function(){
+  const sel = document.getElementById('f-bcode');
+  BANKS.forEach(([c,n]) => {
+    const o = document.createElement('option');
+    o.value = c + '　' + n;
+    o.textContent = c + '　' + n;
+    sel.appendChild(o);
+  });
+})();
+
+// ── PHONE FORMAT ──
+function fmtPhone(el) {
+  let v = el.value.replace(/[^0-9]/g,'');
+  if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
+  if (v.length > 9) v = v.slice(0,9) + '-' + v.slice(9);
+  el.value = v;
+}
+
+// ── AMOUNT ──
+function fmt(n) { return n.toLocaleString('zh-TW'); }
+function calcAmt(el) {
+  const raw = el.value.replace(/[^0-9]/g,'');
+  if (raw) el.value = parseInt(raw).toLocaleString('zh-TW');
+  const amt = parseInt(raw) || 0;
+  document.getElementById('f-actual').textContent = amt > 0 ? fmt(amt) + ' 元' : '—';
+  const ded = document.getElementById('ded');
+  if (amt > 0) {
+    ded.classList.add('show');
+    document.getElementById('d-nhi').textContent = fmt(Math.floor(amt * 0.0211));
+    document.getElementById('d-5').textContent   = fmt(Math.floor(amt * 0.05));
+    document.getElementById('d-10').textContent  = fmt(Math.floor(amt * 0.10));
+  } else ded.classList.remove('show');
+}
+
+// ── WORK DROPDOWN ──
+function onWorkSel(el) {
+  const c = document.getElementById('f-work-custom');
+  el.value === '__other__' ? c.classList.add('show') : (c.classList.remove('show'), c.value='');
+}
+function getWork() {
+  const sel = document.getElementById('f-work-sel').value;
+  if (sel === '__other__') return document.getElementById('f-work-custom').value.trim();
+  return sel;
+}
+
+// ── ADDRESS SYNC ──
+function syncAddr() {
+  const m = document.getElementById('f-addr-mail');
+  const cb = document.getElementById('same-addr');
+  m.disabled = cb.checked;
+  if (cb.checked) m.value = document.getElementById('f-addr-reg').value;
+}
+document.getElementById('f-addr-reg').addEventListener('input', function() {
+  if (document.getElementById('same-addr').checked)
+    document.getElementById('f-addr-mail').value = this.value;
+});
+
+// ── BANK TOGGLE ──
+function toggleBank() {
+  const v = document.querySelector('input[name=pay]:checked').value;
+  document.getElementById('bank-row').style.display = v === 'transfer' ? 'flex' : 'none';
+}
+
+// ── AUTOFILL ──
+let _af = null;
+function lookupID(el) {
+  const id = el.value.trim().toUpperCase();
+  el.value = id;
+  const badge = document.getElementById('af');
+  if (id.length === 10) {
+    const stored = localStorage.getItem('lp_' + id);
+    if (stored) {
+      _af = JSON.parse(stored);
+      document.getElementById('af-name').textContent = _af.name || id;
+      badge.classList.add('show');
+    } else { badge.classList.remove('show'); _af = null; }
+  } else { badge.classList.remove('show'); _af = null; }
+}
+function hideAF() { document.getElementById('af').classList.remove('show'); }
+function applyAF() {
+  if (!_af) return;
+  const d = _af;
+  if (d.name)    document.getElementById('f-name').value = d.name;
+  if (d.phone)   document.getElementById('f-phone').value = d.phone;
+  if (d.addrReg) document.getElementById('f-addr-reg').value = d.addrReg;
+  if (d.addrMail)document.getElementById('f-addr-mail').value = d.addrMail;
+  if (d.bcode)   document.getElementById('f-bcode').value = d.bcode;
+  if (d.bacc)    document.getElementById('f-bacc').value = d.bacc;
+  if (d.work) {
+    const sel = document.getElementById('f-work-sel');
+    const opts = [...sel.options].map(o => o.value);
+    if (opts.includes(d.work)) {
+      sel.value = d.work;
+      document.getElementById('f-work-custom').classList.remove('show');
+    } else {
+      sel.value = '__other__';
+      document.getElementById('f-work-custom').classList.add('show');
+      document.getElementById('f-work-custom').value = d.work;
+    }
+  }
+  if (d.taxCode) {
+    const r = document.querySelector('input[name=tax][value="' + d.taxCode + '"]');
+    if (r) r.checked = true;
+  }
+  if (d.bacc) {
+    document.querySelector('input[name=pay][value=transfer]').checked = true;
+    toggleBank();
+  }
+  hideAF();
+  showToast('✓ 已自動帶入歷史資料');
+}
+function saveProfile(data) {
+  if (!data.pid) return;
+  localStorage.setItem('lp_' + data.pid.toUpperCase(), JSON.stringify({
+    name: data.name, phone: data.phone,
+    addrReg: data.addrReg, addrMail: data.addrMail,
+    work: data.work, bcode: data.bcode, bacc: data.bacc,
+    taxCode: data.taxCode,
+  }));
+}
+
+// ── CLEAR ──
+function clearForm() {
+  ['f-name','f-pid','f-phone','f-addr-reg','f-addr-mail','f-bacc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-actual').textContent = '—';
+  document.getElementById('ded').classList.remove('show');
+  document.getElementById('f-work-sel').value = '';
+  document.getElementById('f-work-custom').classList.remove('show');
+  document.getElementById('f-work-custom').value = '';
+  document.getElementById('f-bcode').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  showToast('已清除所有欄位');
+}
+
+// ── STEP INDICATOR ──
+function setStepUI(n) {
+  [['s1',1],['s2i',2],['s3i',3]].forEach(([id,i]) => {
+    const el = document.getElementById(id);
+    el.className = 'step ' + (i < n ? 'done' : i === n ? 'active' : 'pending');
+    el.querySelector('.step-dot').textContent = i < n ? '✓' : String(i);
+  });
+  document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('step3').style.display = n === 3 ? 'block' : 'none';
+  document.getElementById('vendor-mode').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── GET LOGO BASE64 ──
+function getLogoB64() {
+  const img = document.querySelector('#pdoc .pdoc-hd img, .pdoc-hd img');
+  return img ? img.src : '';
+}
+
+// ── FILL PREVIEW (step2 + vendor) ──
+function fillPreview(prefix, d) {
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v||''; };
+  set(prefix+'-name', d.name); set(prefix+'-work', d.work);
+  set(prefix+'-phone', d.phone); set(prefix+'-areg', d.addrReg); set(prefix+'-amail', d.addrMail);
+  set(prefix+'-bname', d.name); set(prefix+'-pid', d.pid);
+  set(prefix+'-bacc', d.bcode ? d.bcode+'　'+(d.bacc||'') : d.bacc||'');
+  set(prefix+'-date', d.date);
+  const payMap = {cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
+  set(prefix+'-pay', payMap[d.pay]||d.pay);
+  const codeMap = {'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
+  set(prefix+'-taxcode', codeMap[d.taxCode]||'（未選擇）');
+  const amt = parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
+  set(prefix+'-amt-text', fmt(amt)+' 元整');
+  set(prefix+'-actual', fmt(amt)+' 元');
+  set(prefix+'-nhi', fmt(Math.floor(amt*0.0211)));
+  set(prefix+'-d5',  fmt(Math.floor(amt*0.05)));
+  set(prefix+'-d10', fmt(Math.floor(amt*0.10)));
+  const noteMap = {
+    '9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。',
+    '50':'薪資所得：依薪資扣繳稅額表辦理。',
+    '9B':'稿費所得：給付金額達20,001元起扣10%。',
+  };
+  set(prefix+'-ded-note', noteMap[d.taxCode]||'');
+}
+
+// ── NAVIGATION ──
+function toStep2() {
+  const name   = document.getElementById('f-name').value.trim();
+  const pid    = document.getElementById('f-pid').value.trim();
+  const work   = getWork();
+  const amount = document.getElementById('f-amount').value.trim();
+  const date   = document.getElementById('f-date').value;
+  if (!name || !pid || !work || !amount || !date) {
+    showToast('⚠ 請填寫必填欄位（姓名、身分證、工作內容、金額、日期）'); return;
+  }
+  const data = {
+    name, pid, work, amount, date,
+    phone:   document.getElementById('f-phone').value,
+    addrReg: document.getElementById('f-addr-reg').value,
+    addrMail:document.getElementById('f-addr-mail').value,
+    taxCode: document.querySelector('input[name=tax]:checked')?.value||'',
+    pay:     document.querySelector('input[name=pay]:checked')?.value||'transfer',
+    bcode:   document.getElementById('f-bcode').value,
+    bacc:    document.getElementById('f-bacc').value,
+  };
+  sessionStorage.setItem('lfd', JSON.stringify(data));
+  saveProfile(data);
+  // Fill step2 preview
+  fillPreview('s2p', data);
+  // Copy logo
+  const logoSrc = document.querySelector('.pdoc-hd img')?.src || '';
+  const s2lw = document.getElementById('s2-logo-wrap');
+  if (logoSrc) s2lw.innerHTML = '<img src="'+logoSrc+'" style="height:44px;object-fit:contain;margin-bottom:4px;">';
+  setStepUI(2);
+}
+function toStep1() { setStepUI(1); }
+function toStep2back() { setStepUI(2); }
+
+// ── SIGN PANEL (inline in step2) ──
+function openSignPanel() {
+  document.getElementById('sign-panel').classList.add('show');
+  initCanvas();
+}
+function closeSignPanel() {
+  document.getElementById('sign-panel').classList.remove('show');
+}
+
+// ── SHARE ──
+function buildShareURL() {
+  const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+  return window.location.href.split('?')[0] + '?vendor=1&d=' + encoded;
+}
+function shareViaLine() {
+  const url = buildShareURL();
+  const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結完成簽名：\n' + url);
+  window.open('https://line.me/R/msg/text/?' + msg, '_blank');
+}
+function shareViaMail() {
+  const url = buildShareURL();
+  const subject = encodeURIComponent('【裸肌股份有限公司】勞務報酬單 — 請簽名');
+  const body = encodeURIComponent('您好，\n\n請點擊以下連結，確認勞務報酬單內容並完成簽名：\n\n' + url + '\n\n感謝配合。\n裸肌股份有限公司');
+  window.open('mailto:?subject='+subject+'&body='+body);
+}
+
+// ── CANVAS (step2 inline sign) ──
+let _c, _ctx, _drawing=false, _pColor='#1a1a2e', _pSize=2.5, _hasSig=false;
+function initCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const oldC = document.getElementById('sig-canvas');
+  const newC = oldC.cloneNode(true);
+  wrap.replaceChild(newC, oldC);
+  _c=newC; _ctx=_c.getContext('2d');
+  _c.width=wrap.clientWidth; _c.height=140;
+  _hasSig=false;
+  document.getElementById('canvas-ph').classList.remove('hidden');
+  _c.addEventListener('mousedown',sDown);
+  _c.addEventListener('mousemove',sMove);
+  _c.addEventListener('mouseup',sUp);
+  _c.addEventListener('mouseleave',sUp);
+  _c.addEventListener('touchstart',e=>{e.preventDefault();sDown(e.touches[0]);},{passive:false});
+  _c.addEventListener('touchmove',e=>{e.preventDefault();sMove(e.touches[0]);},{passive:false});
+  _c.addEventListener('touchend',sUp);
+}
+function xy(e){const r=_c.getBoundingClientRect();return{x:(e.clientX-r.left)*(_c.width/r.width),y:(e.clientY-r.top)*(_c.height/r.height)};}
+function sDown(e){_drawing=true;const p=xy(e);_ctx.beginPath();_ctx.moveTo(p.x,p.y);if(!_hasSig){_hasSig=true;document.getElementById('canvas-ph').classList.add('hidden');}}
+function sMove(e){if(!_drawing)return;const p=xy(e);_ctx.strokeStyle=_pColor;_ctx.lineWidth=_pSize;_ctx.lineCap='round';_ctx.lineJoin='round';_ctx.lineTo(p.x,p.y);_ctx.stroke();_ctx.beginPath();_ctx.moveTo(p.x,p.y);}
+function sUp(){_drawing=false;}
+function clearSig(){if(!_c)return;_ctx.clearRect(0,0,_c.width,_c.height);_hasSig=false;document.getElementById('canvas-ph').classList.remove('hidden');}
+function setPenC(el){document.querySelectorAll('.col-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');_pColor=el.dataset.c;}
+function setPenC2(el){document.querySelectorAll('.sz-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');_pSize=parseFloat(el.dataset.s);}
+
+function confirmSig() {
+  if(!_hasSig){showToast('⚠ 請先完成簽名');return;}
+  const url=_c.toDataURL('image/png');
+  sessionStorage.setItem('lfsig',url);
+  // Show sig in overlay box
+  const img=document.getElementById('sig-preview-img');
+  img.src=url; img.style.display='block';
+  document.querySelector('.sig-overlay-wm').style.opacity='0';
+  closeSignPanel();
+  document.getElementById('btn-download-pdf').style.display='inline-block';
+  document.getElementById('after-sig-actions').style.display='flex';
+  showToast('✓ 簽名完成！可點「下載 PDF」儲存');
+}
+
+// ── DOWNLOAD PDF (print trigger) ──
+function downloadPDF() {
+  const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  const sigURL = sessionStorage.getItem('lfsig')||'';
+  fillStep3(sigURL, d);
+  const s3 = document.getElementById('step3');
+  s3.style.display = 'block';
+  s3.classList.add('print-active');
+  setTimeout(() => {
+    window.print();
+    s3.classList.remove('print-active');
+    s3.style.display = 'none';
+  }, 300);
+}
+
+// ── VENDOR MODE ──
+function initVendorMode() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('vendor')) return;
+  try {
+    const d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
+    sessionStorage.setItem('lfd', JSON.stringify(d));
+    // Hide all normal UI
+    document.getElementById('step1').style.display='none';
+    document.getElementById('step2').style.display='none';
+    document.getElementById('step3').style.display='none';
+    document.querySelector('.steps').style.display='none';
+    // Show vendor mode
+    const vm = document.getElementById('vendor-mode');
+    vm.classList.add('show');
+    // Fill info
+    document.getElementById('v-name').textContent=d.name||'';
+    document.getElementById('v-amt').textContent=(d.amount||'')+' 元';
+    document.getElementById('v-date').textContent=d.date||'';
+    // Fill preview body
+    const codeMap={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
+    const payMap={cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
+    const amt=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
+    document.getElementById('v-preview-body').innerHTML=`
+      <div class="pbar">支領內容摘要</div>
+      <div class="pr"><span class="pl">工作內容：</span><span class="pv">${d.work||''}</span></div>
+      <div class="pr"><span class="pl">應付金額：</span><span class="pv">${fmt(amt)} 元整</span></div>
+      <div class="pr"><span class="pl">所得格式：</span><span class="pv">${codeMap[d.taxCode]||''}</span></div>
+      <div class="pr"><span class="pl">支領方式：</span><span class="pv">${payMap[d.pay]||''}</span></div>
+      <div class="pr"><span class="pl">所得者：</span><span class="pv">${d.name||''}</span><span class="pl" style="margin-left:8px;">身分證：</span><span class="pv">${d.pid||''}</span></div>
+      <div class="pr"><span class="pl">銀行帳號：</span><span class="pv">${d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||''}</span></div>
+    `;
+    // Copy logo
+    const logoSrc = document.querySelector('.pdoc-hd img')?.src||'';
+    if(logoSrc) document.getElementById('v-logo-wrap').innerHTML='<img src="'+logoSrc+'" style="height:44px;object-fit:contain;margin-bottom:4px;">';
+    // Init vendor canvas
+    initVendorCanvas();
+  window.addEventListener("resize", ()=>{ if(_vc){ const w=document.getElementById("vendor-sig-wrap").clientWidth; _vc.width=w; } });
+  } catch(e) { console.error(e); }
+}
+
+// ── VENDOR CANVAS ──
+let _vc, _vctx, _vdrawing=false, _vhasSig=false;
+function initVendorCanvas() {
+  const wrap = document.getElementById('vendor-sig-wrap');
+  _vc = document.getElementById('vendor-canvas');
+  _vctx = _vc.getContext('2d');
+  _vc.width = wrap.clientWidth; _vc.height = 200;
+  _vc.addEventListener('mousedown',vDown);
+  _vc.addEventListener('mousemove',vMove);
+  _vc.addEventListener('mouseup',vUp);
+  _vc.addEventListener('mouseleave',vUp);
+  _vc.addEventListener('touchstart',e=>{e.preventDefault();vDown(e.touches[0]);},{passive:false});
+  _vc.addEventListener('touchmove',e=>{e.preventDefault();vMove(e.touches[0]);},{passive:false});
+  _vc.addEventListener('touchend',vUp);
+}
+function vXY(e){const r=_vc.getBoundingClientRect();return{x:(e.clientX-r.left)*(_vc.width/r.width),y:(e.clientY-r.top)*(_vc.height/r.height)};}
+function vDown(e){_vdrawing=true;const p=vXY(e);_vctx.beginPath();_vctx.moveTo(p.x,p.y);if(!_vhasSig){_vhasSig=true;document.getElementById('vendor-sig-ph').classList.add('hidden');}}
+function vMove(e){if(!_vdrawing)return;const p=vXY(e);_vctx.strokeStyle='#1a1a2e';_vctx.lineWidth=2.5;_vctx.lineCap='round';_vctx.lineJoin='round';_vctx.lineTo(p.x,p.y);_vctx.stroke();_vctx.beginPath();_vctx.moveTo(p.x,p.y);}
+function vUp(){_vdrawing=false;}
+function clearVendorSig(){_vctx.clearRect(0,0,_vc.width,_vc.height);_vhasSig=false;document.getElementById('vendor-sig-ph').classList.remove('hidden');}
+function confirmVendorSig(){
+  if(!_vhasSig){showToast('⚠ 請先完成簽名');return;}
+  const sigURL=_vc.toDataURL('image/png');
+  sessionStorage.setItem('lfsig',sigURL);
+  const d=JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  fillStep3(sigURL, d);
+  document.getElementById('vendor-mode').classList.remove('show');
+  const s3v = document.getElementById('step3');
+  s3v.style.display='block';
+  s3v.classList.add('print-active');
+  showToast('✓ 簽名完成，準備下載 PDF⋯', true);
+  setTimeout(()=>{window.print();s3v.classList.remove('print-active');s3v.style.display='none';showVendorDone();},800);
+}
+
+// ── FILL STEP 3 ──
+function fillStep3(sigURL, d) {
+  d = d || JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v||''; };
+  set('p-name',d.name); set('p-work',d.work);
+  set('p-phone',d.phone); set('p-areg',d.addrReg); set('p-amail',d.addrMail);
+  set('p-bname',d.name); set('p-pid',d.pid);
+  set('p-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||'');
+  set('p-date',d.date);
+  const payMap={cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
+  set('p-pay',payMap[d.pay]||d.pay);
+  const codeMap={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
+  set('p-taxcode',codeMap[d.taxCode]||'（未選擇）');
+  const amt=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
+  set('p-amt-text',fmt(amt)+' 元整'); set('p-actual',fmt(amt)+' 元');
+  set('p-nhi',fmt(Math.floor(amt*0.0211))); set('p-d5',fmt(Math.floor(amt*0.05))); set('p-d10',fmt(Math.floor(amt*0.10)));
+  const noteMap={'9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
+  set('p-ded-note',noteMap[d.taxCode]||'');
+  const sig=document.getElementById('p-sig');
+  if(sig){sig.src=sigURL;sig.style.display='block';}
+}
+
+// ── INIT VENDOR MODE ON LOAD ──
+window.addEventListener('DOMContentLoaded', initVendorMode);
+
+
+// ── VENDOR DONE ──
+function showVendorDone() {
+  document.getElementById('vendor-mode').classList.add('show');
+  const vm = document.getElementById('vendor-mode');
+  vm.innerHTML = '<div class="vendor-card" style="text-align:center;padding:48px 36px;">' +
+    '<div style="font-size:48px;margin-bottom:16px;">✅</div>' +
+    '<div style="font-family:\'Noto Serif TC\',serif;font-size:20px;font-weight:700;margin-bottom:12px;">簽名完成</div>' +
+    '<div style="font-size:14px;color:var(--light);line-height:1.8;">PDF 已開啟列印視窗<br>請選擇「儲存為 PDF」完成下載<br><br>感謝您的配合！</div>' +
+    '</div>';
+}
+
+// ── TOAST ──
+function showToast(msg, persist) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  if (!persist) setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
