@@ -753,7 +753,6 @@ const BANKS = [
 function fmtPhone(el) {
   let v = el.value.replace(/[^0-9]/g,'');
   if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
-  if (v.length > 9) v = v.slice(0,9) + '-' + v.slice(9);
   el.value = v;
 }
 
@@ -965,7 +964,12 @@ function closeSignPanel() {
 // ── SHARE ──
 function buildShareURL() {
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+  // Encode with UTF-8 support
+  const str = JSON.stringify(d);
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  const encoded = btoa(binary);
   return window.location.href.split('?')[0] + '?vendor=1&d=' + encoded;
 }
 function shareViaLine() {
@@ -1043,7 +1047,20 @@ function initVendorMode() {
   // Immediately hide UI before parsing data
   document.body.classList.add('vendor-mode');
   try {
-    const d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
+    let d;
+    try {
+      // Try modern TextDecoder approach first
+      const raw = atob(params.get('d'));
+      const bytes = new Uint8Array(raw.length);
+      for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+      d = JSON.parse(new TextDecoder().decode(bytes));
+    } catch(e1) {
+      try {
+        d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
+      } catch(e2) {
+        d = JSON.parse(atob(params.get('d')));
+      }
+    }
     sessionStorage.setItem('lfd', JSON.stringify(d));
     // Hide all normal UI
     // UI already hidden via body.vendor-mode class
@@ -1075,6 +1092,18 @@ function initVendorMode() {
     if(logoSrc) document.getElementById('v-logo-wrap').innerHTML='<div style="flex-shrink:0;width:100px;height:56px;background:#fff;display:flex;align-items:center;justify-content:center;padding:2px;"><img src="'+logoSrc+'" style="height:50px;object-fit:contain;"></div>';
     // Init vendor canvas
     initVendorCanvas();
+    // Re-init after render to get correct width
+    setTimeout(() => {
+      if(_vc) {
+        const wrap2 = document.getElementById('vendor-sig-wrap');
+        const w2 = wrap2.clientWidth || wrap2.offsetWidth || 500;
+        if(w2 > 50 && w2 !== _vc.width) {
+          _vc.width = w2;
+          _vhasSig = false;
+          document.getElementById('vendor-sig-ph').classList.remove('hidden');
+        }
+      }
+    }, 200);
   window.addEventListener("resize", ()=>{ if(_vc){ const w=document.getElementById("vendor-sig-wrap").clientWidth; _vc.width=w; } });
   } catch(e) { console.error(e); }
 }
@@ -1085,7 +1114,8 @@ function initVendorCanvas() {
   const wrap = document.getElementById('vendor-sig-wrap');
   _vc = document.getElementById('vendor-canvas');
   _vctx = _vc.getContext('2d');
-  _vc.width = wrap.clientWidth; _vc.height = 200;
+  const w = wrap.clientWidth || wrap.offsetWidth || 500;
+  _vc.width = w; _vc.height = 200;
   _vc.addEventListener('mousedown',vDown);
   _vc.addEventListener('mousemove',vMove);
   _vc.addEventListener('mouseup',vUp);
