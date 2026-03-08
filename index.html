@@ -592,20 +592,43 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15
 
 <!-- ══ VENDOR MODE: 廠商簽名頁 ══ -->
 <div id="vendor-mode">
-  <div class="vendor-card">
-    <div class="doc-header" style="margin-bottom:16px;">
+  <div class="pdoc" style="max-width:600px;margin:0 auto;box-shadow:3px 3px 0 rgba(0,0,0,.07);border:1px solid #ccc;border-top:4px solid var(--accent);">
+    <div class="pdoc-hd">
       <div id="v-logo-wrap"></div>
-      <div class="doc-titles"><div class="co">裸肌股份有限公司</div><div class="sub">勞務報酬單　— 收款人簽名</div></div>
+      <div class="pdoc-tw"><div class="co">裸肌股份有限公司</div><div class="sub">勞務報酬單</div></div>
     </div>
-    <div class="vendor-infobar">
-      <div><span>收款人</span><strong id="v-name">—</strong></div>
-      <div><span>金額</span><strong id="v-amt">—</strong></div>
-      <div><span>日期</span><strong id="v-date">—</strong></div>
+    <div class="pbar">支領內容摘要</div>
+    <div class="pr"><span class="pl">茲証明</span><span class="pv" id="v-name2"></span><span style="font-size:12px;white-space:nowrap;border-bottom:1px solid #999;padding-bottom:2px;align-self:flex-end;">確實領取下列款項無誤</span></div>
+    <div class="pr"><span class="pl">工作內容：</span><span class="pv" id="v-work"></span></div>
+    <div class="pamt-box">
+      <div class="pamt-hd"><div>代扣二代健保 / 廢棄</div><div>實付金額</div></div>
+      <div class="pamt-in">
+        <div class="pamt-note" id="v-ded-note"></div>
+        <div class="pamt-val"  id="v-actual"></div>
+      </div>
+      <div class="pded">
+        <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="v-nhi"></div></div>
+        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="v-d5"></div></div>
+        <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="v-d10"></div></div>
+      </div>
     </div>
-    <!-- 完整預覽 -->
-    <div id="v-preview-body" style="margin-bottom:16px;font-size:13px;"></div>
+    <div style="font-size:12px;margin:6px 0;">
+      所得格式代號：○50（薪資）&nbsp;○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      <span style="font-weight:700;color:var(--accent);">已選：</span><span id="v-taxcode"></span>
+    </div>
+    <hr class="pdiv">
+    <div class="pr"><span class="pl">應付新台幣：</span><span class="pv" id="v-amt-text"></span></div>
+    <div class="pr"><span class="pl">支領方式：</span><span class="pv" id="v-pay"></span></div>
+    <div class="pr"><span class="pl">所得者姓名：</span><span class="pv" id="v-bname"></span><span class="pl" style="margin-left:8px;">身分證字號：</span><span class="pv" id="v-pid"></span></div>
+    <div class="pr"><span class="pl">銀行帳號：</span><span class="pv" id="v-bacc"></span></div>
+    <div class="pr"><span class="pl">戶籍地址：</span><span class="pv" id="v-areg"></span></div>
+    <div class="pr"><span class="pl">通訊地址：</span><span class="pv" id="v-amail"></span></div>
+    <div class="pr"><span class="pl">聯絡電話：</span><span class="pv" id="v-phone"></span></div>
+    <hr class="pdiv">
     <!-- 大簽名框 -->
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px;letter-spacing:.5px;color:var(--ink);">請在下方簽名 <span style="font-size:11px;font-weight:400;color:var(--light);">（支援手指 / 觸控筆書寫）</span></div>
+    <div style="font-size:13px;font-weight:600;margin:12px 0 8px;letter-spacing:.5px;color:var(--ink);">
+      所得人簽名欄 <span style="font-size:11px;font-weight:400;color:var(--light);">（支援手指 / 觸控筆書寫）</span>
+    </div>
     <div class="vendor-sig-wrap" id="vendor-sig-wrap">
       <canvas id="vendor-canvas" height="220"></canvas>
       <div class="vendor-sig-ph" id="vendor-sig-ph">此　處　簽　名</div>
@@ -1000,26 +1023,28 @@ function initVendorMode() {
     // Show vendor mode
     const vm = document.getElementById('vendor-mode');
     vm.classList.add('show');
-    // Fill info
-    document.getElementById('v-name').textContent=d.name||'';
-    document.getElementById('v-amt').textContent=(d.amount||'')+' 元';
-    document.getElementById('v-date').textContent=d.date||'';
-    // Fill preview body
-    const codeMap={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
-    const payMap={cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
-    const amt=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
-    document.getElementById('v-preview-body').innerHTML=`
-      <div class="pbar">支領內容摘要</div>
-      <div class="pr"><span class="pl">工作內容：</span><span class="pv">${d.work||''}</span></div>
-      <div class="pr"><span class="pl">應付金額：</span><span class="pv">${fmt(amt)} 元整</span></div>
-      <div class="pr"><span class="pl">所得格式：</span><span class="pv">${codeMap[d.taxCode]||''}</span></div>
-      <div class="pr"><span class="pl">支領方式：</span><span class="pv">${payMap[d.pay]||''}</span></div>
-      <div class="pr"><span class="pl">所得者：</span><span class="pv">${d.name||''}</span><span class="pl" style="margin-left:8px;">身分證：</span><span class="pv">${d.pid||''}</span></div>
-      <div class="pr"><span class="pl">銀行帳號：</span><span class="pv">${d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||''}</span></div>
-    `;
+    // Fill all vendor fields
+    const codeMap2={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
+    const payMap2={cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
+    const amt2=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
+    const vset=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||''};
+    vset('v-name2',d.name); vset('v-work',d.work);
+    vset('v-actual',fmt(amt2)+' 元'); vset('v-amt-text',fmt(amt2)+' 元整');
+    vset('v-nhi',fmt(Math.floor(amt2*0.0211)));
+    vset('v-d5', fmt(Math.floor(amt2*0.05)));
+    vset('v-d10',fmt(Math.floor(amt2*0.10)));
+    vset('v-taxcode',codeMap2[d.taxCode]||'（未選擇）');
+    vset('v-pay',payMap2[d.pay]||d.pay||'');
+    vset('v-bname',d.name); vset('v-pid',d.pid);
+    vset('v-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||''
+    ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail); vset('v-phone',d.phone);
+    const noteMap2={'9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
+    vset('v-ded-note',noteMap2[d.taxCode]||'');
     // Copy logo
-    const logoSrc = document.querySelector('.pdoc-hd img')?.src||'';
-    if(logoSrc) document.getElementById('v-logo-wrap').innerHTML='<img src="'+logoSrc+'" style="height:44px;object-fit:contain;margin-bottom:4px;">';
+    // Copy logo from step3 pdoc
+    const logoImg = document.querySelector('#step3 .pdoc-hd img');
+    const logoSrc = logoImg ? logoImg.src : '';
+    if(logoSrc) document.getElementById('v-logo-wrap').innerHTML='<div style="flex-shrink:0;width:100px;height:56px;background:#fff;display:flex;align-items:center;justify-content:center;padding:2px;"><img src="'+logoSrc+'" style="height:50px;object-fit:contain;"></div>';
     // Init vendor canvas
     initVendorCanvas();
   window.addEventListener("resize", ()=>{ if(_vc){ const w=document.getElementById("vendor-sig-wrap").clientWidth; _vc.width=w; } });
