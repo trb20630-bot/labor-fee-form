@@ -423,7 +423,7 @@ body.vendor-mode #vendor-mode {
     <div class="item-no">3</div>
     <div class="item-body">
       <div class="item-label">連絡電話</div>
-      <input type="tel" id="f-phone" placeholder="0912-345-678" oninput="fmtPhone(this)" maxlength="13">
+      <input type="tel" id="f-phone" placeholder="0912-345678" oninput="fmtPhone(this)" maxlength="12">
     </div>
   </div>
 
@@ -964,13 +964,15 @@ function closeSignPanel() {
 // ── SHARE ──
 function buildShareURL() {
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
-  // Encode with UTF-8 support
+  // Encode: JSON → UTF-8 bytes → base64 → URL-safe
   const str = JSON.stringify(d);
   const bytes = new TextEncoder().encode(str);
   let binary = '';
   bytes.forEach(b => binary += String.fromCharCode(b));
-  const encoded = btoa(binary);
-  return window.location.href.split('?')[0] + '?vendor=1&d=' + encoded;
+  // Make URL-safe: replace +, /, = that break URLs
+  const encoded = btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const base = window.location.href.split('?')[0];
+  return base + '?vendor=1&d=' + encoded;
 }
 function shareViaLine() {
   const url = buildShareURL();
@@ -1047,20 +1049,13 @@ function initVendorMode() {
   // Immediately hide UI before parsing data
   document.body.classList.add('vendor-mode');
   try {
-    let d;
-    try {
-      // Try modern TextDecoder approach first
-      const raw = atob(params.get('d'));
-      const bytes = new Uint8Array(raw.length);
-      for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
-      d = JSON.parse(new TextDecoder().decode(bytes));
-    } catch(e1) {
-      try {
-        d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
-      } catch(e2) {
-        d = JSON.parse(atob(params.get('d')));
-      }
-    }
+    // Decode URL-safe base64 → UTF-8 → JSON
+    const raw64 = params.get('d').replace(/-/g,'+').replace(/_/g,'/');
+    const pad = raw64.length % 4 ? raw64 + '===='.slice(raw64.length % 4) : raw64;
+    const rawBytes = atob(pad);
+    const byteArr = new Uint8Array(rawBytes.length);
+    for(let i=0;i<rawBytes.length;i++) byteArr[i]=rawBytes.charCodeAt(i);
+    const d = JSON.parse(new TextDecoder().decode(byteArr));
     sessionStorage.setItem('lfd', JSON.stringify(d));
     // Hide all normal UI
     // UI already hidden via body.vendor-mode class
@@ -1090,21 +1085,13 @@ function initVendorMode() {
     const logoImg = document.querySelector('#step3 .pdoc-hd img');
     const logoSrc = logoImg ? logoImg.src : '';
     if(logoSrc) document.getElementById('v-logo-wrap').innerHTML='<div style="flex-shrink:0;width:100px;height:56px;background:#fff;display:flex;align-items:center;justify-content:center;padding:2px;"><img src="'+logoSrc+'" style="height:50px;object-fit:contain;"></div>';
-    // Init vendor canvas
-    initVendorCanvas();
-    // Re-init after render to get correct width
-    setTimeout(() => {
-      if(_vc) {
-        const wrap2 = document.getElementById('vendor-sig-wrap');
-        const w2 = wrap2.clientWidth || wrap2.offsetWidth || 500;
-        if(w2 > 50 && w2 !== _vc.width) {
-          _vc.width = w2;
-          _vhasSig = false;
-          document.getElementById('vendor-sig-ph').classList.remove('hidden');
-        }
-      }
-    }, 200);
-  window.addEventListener("resize", ()=>{ if(_vc){ const w=document.getElementById("vendor-sig-wrap").clientWidth; _vc.width=w; } });
+    // Init canvas after browser has rendered the visible vendor-mode
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        initVendorCanvas();
+      });
+    });
+    window.addEventListener("resize", ()=>{ if(_vc){ const wrap=document.getElementById("vendor-sig-wrap"); _vc.width=wrap.clientWidth||wrap.offsetWidth||500; }});
   } catch(e) { console.error(e); }
 }
 
@@ -1114,8 +1101,11 @@ function initVendorCanvas() {
   const wrap = document.getElementById('vendor-sig-wrap');
   _vc = document.getElementById('vendor-canvas');
   _vctx = _vc.getContext('2d');
-  const w = wrap.clientWidth || wrap.offsetWidth || 500;
+  const w = Math.max(wrap.getBoundingClientRect().width, wrap.clientWidth, wrap.offsetWidth, 300);
   _vc.width = w; _vc.height = 200;
+  _vhasSig = false;
+  const ph = document.getElementById('vendor-sig-ph');
+  if(ph) ph.classList.remove('hidden');
   _vc.addEventListener('mousedown',vDown);
   _vc.addEventListener('mousemove',vMove);
   _vc.addEventListener('mouseup',vUp);
