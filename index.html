@@ -1119,7 +1119,7 @@ function vDown(e){_vdrawing=true;const p=vXY(e);_vctx.beginPath();_vctx.moveTo(p
 function vMove(e){if(!_vdrawing)return;const p=vXY(e);_vctx.strokeStyle='#1a1a2e';_vctx.lineWidth=2.5;_vctx.lineCap='round';_vctx.lineJoin='round';_vctx.lineTo(p.x,p.y);_vctx.stroke();_vctx.beginPath();_vctx.moveTo(p.x,p.y);}
 function vUp(){_vdrawing=false;}
 function clearVendorSig(){_vctx.clearRect(0,0,_vc.width,_vc.height);_vhasSig=false;document.getElementById('vendor-sig-ph').classList.remove('hidden');}
-function confirmVendorSig(){
+async function confirmVendorSig(){
   if(!_vhasSig){showToast('⚠ 請先完成簽名');return;}
   const sigURL=_vc.toDataURL('image/png');
   sessionStorage.setItem('lfsig',sigURL);
@@ -1129,7 +1129,11 @@ function confirmVendorSig(){
   const s3v = document.getElementById('step3');
   s3v.style.display='block';
   s3v.classList.add('print-active');
-  showToast('✓ 簽名完成，準備下載 PDF⋯', true);
+  showToast('✓ 簽名完成，上傳資料中⋯', true);
+  // Upload data to Google Sheets (non-blocking)
+  uploadToGoogle(d, '').then(ok => {
+    console.log('Google 上傳:', ok ? '成功' : '失敗');
+  });
   setTimeout(()=>{window.print();s3v.classList.remove('print-active');s3v.style.display='none';showVendorDone();},800);
 }
 
@@ -1162,6 +1166,40 @@ if(document.readyState==='loading'){
   initVendorMode();
 }
 
+
+
+// ── UPLOAD TO GOOGLE DRIVE + SHEETS ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwM98dF6jWSpKma05K6u1ZUsOR5OSc8hvpxtmTEcBl5GZzc2YVhtMDwvpEApl4U-svUag/exec';
+
+async function uploadToGoogle(data, pdfBase64) {
+  try {
+    const payload = {
+      ...data,
+      pdfBase64: pdfBase64 || ''
+    };
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // no-cors means we can't read response, but request was sent
+    console.log('上傳完成');
+    return true;
+  } catch(err) {
+    console.error('上傳失敗:', err);
+    return false;
+  }
+}
+
+// Generate PDF as base64 from the print doc
+async function getPDFBase64() {
+  return new Promise(resolve => {
+    // We can't truly generate PDF in browser without library
+    // Return empty string - sheet data will still be recorded
+    resolve('');
+  });
+}
 
 // ── VENDOR DONE ──
 function showVendorDone() {
