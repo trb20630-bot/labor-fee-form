@@ -329,6 +329,10 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15
   .pdoc { box-shadow:none !important; border:none !important; padding:6px !important; max-width:100% !important; }
   .btn-print, .btn-ghost { display:none !important; }
 }
+.vendor-mode #step1,.vendor-mode #step2,.vendor-mode #step3,.vendor-mode .steps{display:none!important;}
+#vendor-mode{display:none;}
+#vendor-mode.show{display:block;}
+
 /* ── PRINT ── */
 @media print {
   body { background: #fff !important; padding: 0 !important; }
@@ -347,6 +351,19 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15
 </style>
 </head>
 <body>
+<script>
+// 廠商模式：提前隱藏填寫頁，避免閃爍
+(function(){
+  if(new URLSearchParams(window.location.search).get('vendor')){
+    // 立即注入 style 隱藏所有非廠商元素
+    var s=document.createElement('style');
+    s.id='vendor-hide';
+    s.textContent='.steps,#step1,#step2,#step3{display:none!important;}#vendor-mode{display:block!important;}';
+    document.head.appendChild(s);
+  }
+})();
+</script>
+
 
 <!-- STEPS -->
 <div class="steps">
@@ -1016,10 +1033,14 @@ function initVendorMode() {
     const d = JSON.parse(decodeURIComponent(escape(atob(params.get('d')))));
     sessionStorage.setItem('lfd', JSON.stringify(d));
     // Hide all normal UI
-    document.getElementById('step1').style.display='none';
-    document.getElementById('step2').style.display='none';
-    document.getElementById('step3').style.display='none';
-    document.querySelector('.steps').style.display='none';
+    // Hide all normal UI immediately
+    document.body.classList.add('vendor-mode');
+    ['step1','step2','step3'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.style.display='none';el.style.setProperty('display','none','important');}
+    });
+    const steps=document.querySelector('.steps');
+    if(steps){steps.style.display='none';steps.style.setProperty('display','none','important');}
     // Show vendor mode
     const vm = document.getElementById('vendor-mode');
     vm.classList.add('show');
@@ -1108,7 +1129,11 @@ function fillStep3(sigURL, d) {
 }
 
 // ── INIT VENDOR MODE ON LOAD ──
-window.addEventListener('DOMContentLoaded', initVendorMode);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', initVendorMode);
+} else {
+  initVendorMode();
+}
 
 
 // ── VENDOR DONE ──
