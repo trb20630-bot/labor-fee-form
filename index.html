@@ -1345,27 +1345,8 @@ async function confirmVendorSig(){
     });
     sigWrap.removeChild(sigImg);
 
-    // 縮放成 A4 比例 (794 x 1123px @ 96dpi)
-    const A4_W = 1588; // 794 * 2 (scale=2)
-    const A4_H = 2246; // 1123 * 2
-    const a4Canvas = document.createElement('canvas');
-    a4Canvas.width  = A4_W;
-    a4Canvas.height = A4_H;
-    const a4Ctx = a4Canvas.getContext('2d');
-    a4Ctx.fillStyle = '#ffffff';
-    a4Ctx.fillRect(0, 0, A4_W, A4_H);
-
-    // 置中貼入，等比例縮放
-    const srcW = canvas.width;
-    const srcH = canvas.height;
-    const scale = Math.min(A4_W / srcW, A4_H / srcH);
-    const dstW  = Math.round(srcW * scale);
-    const dstH  = Math.round(srcH * scale);
-    const dstX  = Math.round((A4_W - dstW) / 2);
-    const dstY  = Math.round((A4_H - dstH) / 2);
-    a4Ctx.drawImage(canvas, dstX, dstY, dstW, dstH);
-
-    const jpegBase64 = a4Canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    // 直接輸出截圖，填滿寬度，不留白邊
+    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
     sessionStorage.setItem('lfJpeg', jpegBase64);
 
     // Step 2: Upload to Google (Sheets + Drive JPEG)
