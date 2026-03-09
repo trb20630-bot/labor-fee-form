@@ -1121,64 +1121,38 @@ function buildShareURL() {
 }
 
 async function shortenURL(longURL) {
-  // Try cleanuri.com API
-  try {
-    const resp = await fetch('https://cleanuri.com/api/v1/shorten', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'url=' + encodeURIComponent(longURL)
-    });
-    if (resp.ok) {
-      const json = await resp.json();
-      if (json.result_url) return json.result_url;
-    }
-  } catch(e) {}
-  // Fallback: return original URL
+  // 不依賴外部 API，直接回傳原始 URL
+  // LINE 手機版可直接傳長網址，不會截斷
   return longURL;
 }
 
-async function shareViaLine() {
-  const btn = document.querySelector('.btn-line');
-  const orig = btn.textContent;
-  btn.textContent = '產生連結中…'; btn.disabled = true;
-  const longURL = buildShareURL();
-  const url = await shortenURL(longURL);
-  btn.textContent = orig; btn.disabled = false;
+function shareViaLine() {
+  const url = buildShareURL();
   const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
-  window.open('https://line.me/R/msg/text/?' + msg, '_blank');
+  window.location.href = 'https://line.me/R/msg/text/?' + msg;
 }
 
 async function copyLink() {
   const btn = document.getElementById('btn-copy');
-  btn.textContent = '產生連結中…'; btn.disabled = true;
-  const longURL = buildShareURL();
-  const url = await shortenURL(longURL);
-  btn.disabled = false;
+  const url = buildShareURL();
   try {
     await navigator.clipboard.writeText(url);
-    btn.textContent = '✅ 已複製！';
-    setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
   } catch(e) {
-    // fallback for older browsers
     const ta = document.createElement('textarea');
-    ta.value = url; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
+    ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
     document.body.removeChild(ta);
-    btn.textContent = '✅ 已複製！';
-    setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
   }
+  btn.textContent = '✅ 已複製！';
+  setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
 }
 
-async function shareViaMail() {
-  const btn = document.querySelector('.btn-mail');
-  const orig = btn.textContent;
-  btn.textContent = '產生連結中…'; btn.disabled = true;
-  const longURL = buildShareURL();
-  const url = await shortenURL(longURL);
-  btn.textContent = orig; btn.disabled = false;
+function shareViaMail() {
+  const url = buildShareURL();
   const subject = encodeURIComponent('【裸肌股份有限公司】勞務報酬單 — 請簽名');
   const body = encodeURIComponent('您好，\n\n請點擊以下連結，確認勞務報酬單內容並完成簽名：\n\n' + url + '\n\n感謝配合。\n裸肌股份有限公司');
-  window.open('mailto:?subject='+subject+'&body='+body);
+  window.location.href = 'mailto:?subject='+subject+'&body='+body;
 }
 
 // ── CANVAS (step2 inline sign) ──
