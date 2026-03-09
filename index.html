@@ -285,6 +285,8 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); width: 15
 .btn-mail { padding:10px 20px; background:#4a86c8; border:none; color:#fff; font-size:13px; font-weight:600; font-family:'Noto Sans TC',sans-serif; cursor:pointer; border-radius:4px; display:flex; align-items:center; gap:6px; }
 .btn-line:hover { background:#05a847; }
 .btn-mail:hover { background:#3a70aa; }
+.btn-copy { padding:10px 20px; background:#6b6b80; border:none; color:#fff; font-size:13px; font-weight:600; font-family:'Noto Sans TC',sans-serif; cursor:pointer; border-radius:4px; display:flex; align-items:center; gap:6px; }
+.btn-copy:hover { background:#55556a; }
 
 /* signature overlay on preview */
 .sig-overlay-wrap { position:relative; margin:16px 0; }
@@ -544,6 +546,7 @@ body.vendor-mode #vendor-mode {
     <div class="share-bar-left">
       <button class="btn-line" onclick="shareViaLine()">📱 LINE 發送簽名邀請</button>
       <button class="btn-mail" onclick="shareViaMail()">✉️ Email 發送簽名邀請</button>
+      <button class="btn-copy" id="btn-copy" onclick="copyLink()">🔗 複製連結</button>
     </div>
     </div>
   </div>
@@ -759,8 +762,22 @@ function fmtPhone(el) {
 // ── AMOUNT ──
 function fmt(n) { return n.toLocaleString('zh-TW'); }
 function calcAmt(el) {
+  // 防止輸入法重複觸發
+  if (el._updating) return;
+  el._updating = true;
   const raw = el.value.replace(/[^0-9]/g,'');
-  if (raw) el.value = parseInt(raw).toLocaleString('zh-TW');
+  const pos = el.selectionStart;
+  const oldLen = el.value.length;
+  if (raw) {
+    const formatted = parseInt(raw).toLocaleString('zh-TW');
+    el.value = formatted;
+    // 維持游標位置
+    const newLen = formatted.length;
+    el.selectionStart = el.selectionEnd = pos + (newLen - oldLen);
+  } else {
+    el.value = '';
+  }
+  el._updating = false;
   const amt = parseInt(raw) || 0;
   document.getElementById('f-actual').textContent = amt > 0 ? fmt(amt) + ' 元' : '—';
   const ded = document.getElementById('ded');
@@ -994,6 +1011,27 @@ async function shareViaLine() {
   btn.textContent = orig; btn.disabled = false;
   const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
   window.open('https://line.me/R/msg/text/?' + msg, '_blank');
+}
+
+async function copyLink() {
+  const btn = document.getElementById('btn-copy');
+  btn.textContent = '產生連結中…'; btn.disabled = true;
+  const longURL = buildShareURL();
+  const url = await shortenURL(longURL);
+  btn.disabled = false;
+  try {
+    await navigator.clipboard.writeText(url);
+    btn.textContent = '✅ 已複製！';
+    setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
+  } catch(e) {
+    // fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✅ 已複製！';
+    setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
+  }
 }
 
 async function shareViaMail() {
