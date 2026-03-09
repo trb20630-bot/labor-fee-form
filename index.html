@@ -771,7 +771,6 @@ function calcAmt(el) {
   if (raw) {
     const formatted = parseInt(raw).toLocaleString('zh-TW');
     el.value = formatted;
-    // 維持游標位置
     const newLen = formatted.length;
     el.selectionStart = el.selectionEnd = pos + (newLen - oldLen);
   } else {
@@ -783,9 +782,12 @@ function calcAmt(el) {
   const ded = document.getElementById('ded');
   if (amt > 0) {
     ded.classList.add('show');
-    document.getElementById('d-nhi').textContent = fmt(Math.floor(amt * 0.0211));
+    // 二代健保：單次給付 >= 20,000 才扣 2.11%
+    document.getElementById('d-nhi').textContent = amt >= 20000 ? fmt(Math.floor(amt * 0.0211)) : '未達起扣點（20,000元）';
+    // 5% 固定人員：依薪資扣繳稅額表，無起扣點限制
     document.getElementById('d-5').textContent   = fmt(Math.floor(amt * 0.05));
-    document.getElementById('d-10').textContent  = fmt(Math.floor(amt * 0.10));
+    // 執行業務 10%：稅額超過 2,000元（給付 > 20,000元）才扣
+    document.getElementById('d-10').textContent  = amt > 20000 ? fmt(Math.floor(amt * 0.10)) : '未達起扣點（20,000元）';
   } else ded.classList.remove('show');
 }
 
