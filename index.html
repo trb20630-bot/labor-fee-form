@@ -1127,32 +1127,46 @@ async function shortenURL(longURL) {
 }
 
 function shareViaLine() {
-  const url = buildShareURL();
-  const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
-  window.location.href = 'https://line.me/R/msg/text/?' + msg;
+  try {
+    const d = sessionStorage.getItem('lfd');
+    if (!d || d === '{}') { alert('⚠️ 找不到表單資料，請回第一步重新填寫'); return; }
+    const url = buildShareURL();
+    alert('連結長度: ' + url.length + '\n前50字: ' + url.substring(0,50));
+    const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
+    window.location.href = 'https://line.me/R/msg/text/?' + msg;
+  } catch(e) { alert('LINE錯誤: ' + e.message); }
 }
 
 async function copyLink() {
   const btn = document.getElementById('btn-copy');
-  const url = buildShareURL();
   try {
-    await navigator.clipboard.writeText(url);
-  } catch(e) {
-    const ta = document.createElement('textarea');
-    ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-  }
-  btn.textContent = '✅ 已複製！';
-  setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
+    const d = sessionStorage.getItem('lfd');
+    if (!d || d === '{}') { alert('⚠️ 找不到表單資料'); return; }
+    const url = buildShareURL();
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '✅ 已複製！';
+    } catch(e) {
+      const ta = document.createElement('textarea');
+      ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✅ 已複製！';
+    }
+    setTimeout(() => { btn.textContent = '🔗 複製連結'; }, 2500);
+  } catch(e) { alert('複製錯誤: ' + e.message); }
 }
 
 function shareViaMail() {
-  const url = buildShareURL();
-  const subject = encodeURIComponent('【裸肌股份有限公司】勞務報酬單 — 請簽名');
-  const body = encodeURIComponent('您好，\n\n請點擊以下連結，確認勞務報酬單內容並完成簽名：\n\n' + url + '\n\n感謝配合。\n裸肌股份有限公司');
-  window.location.href = 'mailto:?subject='+subject+'&body='+body;
+  try {
+    const d = sessionStorage.getItem('lfd');
+    if (!d || d === '{}') { alert('⚠️ 找不到表單資料，請回第一步重新填寫'); return; }
+    const url = buildShareURL();
+    const subject = encodeURIComponent('【裸肌股份有限公司】勞務報酬單 — 請簽名');
+    const body = encodeURIComponent('您好，\n\n請點擊以下連結，確認勞務報酬單內容並完成簽名：\n\n' + url + '\n\n感謝配合。\n裸肌股份有限公司');
+    window.location.href = 'mailto:?subject='+subject+'&body='+body;
+  } catch(e) { alert('Mail錯誤: ' + e.message); }
 }
 
 // ── CANVAS (step2 inline sign) ──
