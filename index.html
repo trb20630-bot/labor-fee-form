@@ -1131,7 +1131,6 @@ function shareViaLine() {
     const d = sessionStorage.getItem('lfd');
     if (!d || d === '{}') { alert('⚠️ 找不到表單資料，請回第一步重新填寫'); return; }
     const url = buildShareURL();
-    alert('連結長度: ' + url.length + '\n前50字: ' + url.substring(0,50));
     const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
     window.location.href = 'https://line.me/R/msg/text/?' + msg;
   } catch(e) { alert('LINE錯誤: ' + e.message); }
@@ -1364,8 +1363,15 @@ async function confirmVendorSig(){
 
     // Step 3: Show success + download button
     btn.textContent = '✅ 已送出';
+    btn.disabled = true;
     showToast('✓ 資料已上傳 Google！', false);
     document.getElementById('btn-dl-jpeg').style.display = 'inline-block';
+    // 鎖定簽名欄，不讓廠商繼續作畫
+    const vc = document.getElementById('vendor-canvas');
+    if (vc) { vc.style.pointerEvents = 'none'; vc.style.opacity = '0.7'; }
+    const ph = document.getElementById('vendor-sig-ph');
+    if (ph) ph.style.display = 'none';
+    document.getElementById('btn-confirm-sig') && (document.getElementById('btn-confirm-sig').style.display = 'none');
 
   } catch(err) {
     console.error(err);
@@ -1381,10 +1387,30 @@ function downloadJPEG() {
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
   const month = (d.date||'').slice(0,7);
   const name  = d.name || '勞報單';
-  const link  = document.createElement('a');
-  link.href     = 'data:image/jpeg;base64,' + jpegBase64;
-  link.download = month + '_' + name + '_勞報單.jpg';
-  link.click();
+  const filename = month + '_' + name + '_勞報單.jpg';
+
+  // 將 base64 轉成 Blob
+  const byteStr = atob(jpegBase64);
+  const ab = new ArrayBuffer(byteStr.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+  const blob = new Blob([ab], { type: 'image/jpeg' });
+
+  // iOS Safari：直接在新分頁開啟（長按可存圖）
+  const blobURL = URL.createObjectURL(blob);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    window.open(blobURL, '_blank');
+    showToast('長按圖片 → 儲存至相片');
+  } else {
+    const link = document.createElement('a');
+    link.href = blobURL;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobURL), 3000);
+  }
 }
 
 // ── FILL STEP 3 ──
