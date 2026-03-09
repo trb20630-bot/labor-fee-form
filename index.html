@@ -347,6 +347,21 @@ body.vendor-mode #step3 {
 body.vendor-mode #vendor-mode {
   display: block !important;
 }
+
+/* ── 常用聯絡人 ── */
+.contacts-wrap { position:relative; }
+.contacts-select {
+  width:100%; padding:10px 14px; font-size:14px;
+  font-family:'Noto Sans TC',sans-serif;
+  border:1px solid var(--rule); border-radius:6px;
+  background:var(--card); color:var(--ink);
+  cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23e07b1a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  padding-right:36px;
+}
+.contacts-select:focus { outline:none; border-color:var(--accent); }
+.contacts-count { font-size:11px; color:var(--light); margin-top:4px; }
 /* ── PRINT ── */
 @media print {
   body { background: #fff !important; padding: 0 !important; }
@@ -395,6 +410,20 @@ body.vendor-mode #vendor-mode {
     <div class="doc-titles">
       <div class="co">裸肌股份有限公司</div>
       <div class="sub">勞務報酬單　LABOUR FEE STATEMENT</div>
+    </div>
+  </div>
+
+  <!-- 0. 常用聯絡人 -->
+  <div class="item">
+    <div class="item-no" style="background:var(--accent);color:#fff;">★</div>
+    <div class="item-body">
+      <div class="item-label">常用聯絡人</div>
+      <div class="contacts-wrap">
+        <select class="contacts-select" id="contacts-select" onchange="applyContact(this)">
+          <option value="">── 請選擇聯絡人 ──</option>
+        </select>
+        <div class="contacts-count" id="contacts-count"></div>
+      </div>
     </div>
   </div>
 
@@ -472,8 +501,8 @@ body.vendor-mode #vendor-mode {
     <div class="item-body">
       <div class="item-label">所得格式代號</div>
       <div class="radio-row">
-        <label><input type="radio" name="tax" value="9A" onchange="recalcActual()"> ○9A　執行業務</label>
-        <label><input type="radio" name="tax" value="9B" onchange="recalcActual()"> ○9B　稿費</label>
+        <label><input type="radio" name="tax" value="9A" onchange="recalcActual()"> 9A　執行業務</label>
+        <label><input type="radio" name="tax" value="9B" onchange="recalcActual()"> 9B　稿費</label>
       </div>
     </div>
   </div>
@@ -641,7 +670,7 @@ body.vendor-mode #vendor-mode {
       </div>
     </div>
     <div style="font-size:12px;margin:6px 0;">
-      所得格式代號：○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      所得格式代號：9A（執行業務）&nbsp;9B（稿費）&nbsp;
       <span style="font-weight:700;color:var(--accent);">已選：</span><span id="v-taxcode"></span>
     </div>
     <hr class="pdiv">
@@ -695,7 +724,7 @@ body.vendor-mode #vendor-mode {
       </div>
     </div>
     <div style="font-size:12px;margin:6px 0;">
-      所得格式代號：○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      所得格式代號：9A（執行業務）&nbsp;9B（稿費）&nbsp;
       <span style="font-weight:700;color:#e07b1a;">已選：</span><span id="p-taxcode"></span>
     </div>
     <hr class="pdiv">
@@ -834,6 +863,88 @@ function toggleBank() {
   document.getElementById('bank-row').style.display = v === 'transfer' ? 'flex' : 'none';
 }
 
+
+// ── 常用聯絡人 ──
+const CONTACTS_KEY = 'lp_contacts';
+const MAX_CONTACTS = 30;
+
+function loadContacts() {
+  try { return JSON.parse(localStorage.getItem(CONTACTS_KEY)) || []; }
+  catch(e) { return []; }
+}
+
+function saveContact(data) {
+  if (!data.pid || !data.name) return;
+  let list = loadContacts();
+  // 已存在則更新
+  const idx = list.findIndex(c => c.pid === data.pid.toUpperCase());
+  const entry = {
+    pid: data.pid.toUpperCase(), name: data.name,
+    phone: data.phone, addrReg: data.addrReg, addrMail: data.addrMail,
+    work: data.work, bcode: data.bcode, bacc: data.bacc, taxCode: data.taxCode
+  };
+  if (idx >= 0) list[idx] = entry;
+  else list.unshift(entry);
+  // 最多30筆
+  if (list.length > MAX_CONTACTS) list = list.slice(0, MAX_CONTACTS);
+  localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
+  renderContactsDropdown();
+}
+
+function renderContactsDropdown() {
+  const sel = document.getElementById('contacts-select');
+  if (!sel) return;
+  const list = loadContacts();
+  sel.innerHTML = '<option value="">── 請選擇聯絡人 ──</option>';
+  list.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name + '　' + c.pid;
+    sel.appendChild(opt);
+  });
+  const cnt = document.getElementById('contacts-count');
+  if (cnt) cnt.textContent = list.length > 0 ? '已儲存 ' + list.length + ' / ' + MAX_CONTACTS + ' 筆' : '';
+}
+
+function applyContact(sel) {
+  if (!sel.value && sel.value !== 0) return;
+  const list = loadContacts();
+  const c = list[parseInt(sel.value)];
+  if (!c) return;
+  document.getElementById('f-name').value  = c.name  || '';
+  document.getElementById('f-pid').value   = c.pid   || '';
+  document.getElementById('f-phone').value = c.phone || '';
+  document.getElementById('f-addr-reg').value  = c.addrReg  || '';
+  document.getElementById('f-addr-mail').value = c.addrMail || '';
+  document.getElementById('f-bacc').value  = c.bacc  || '';
+  if (c.bcode) document.getElementById('f-bcode').value = c.bcode;
+  if (c.work) {
+    const wsel = document.getElementById('f-work-sel');
+    const opts = [...wsel.options].map(o => o.value);
+    if (opts.includes(c.work)) {
+      wsel.value = c.work;
+      document.getElementById('f-work-custom').classList.remove('show');
+    } else {
+      wsel.value = '__other__';
+      document.getElementById('f-work-custom').classList.add('show');
+      document.getElementById('f-work-custom').value = c.work;
+    }
+  }
+  if (c.taxCode) {
+    const r = document.querySelector('input[name=tax][value="' + c.taxCode + '"]');
+    if (r) r.checked = true;
+  }
+  if (c.bacc) {
+    document.querySelector('input[name=pay][value=transfer]').checked = true;
+    toggleBank();
+  }
+  sel.value = '';
+  showToast('✓ 已帶入「' + c.name + '」的資料');
+}
+
+// 初始化下拉選單
+renderContactsDropdown();
+
 // ── AUTOFILL ──
 let _af = null;
 function lookupID(el) {
@@ -884,6 +995,7 @@ function applyAF() {
 }
 function saveProfile(data) {
   if (!data.pid) return;
+  saveContact(data); // 同步更新常用聯絡人
   localStorage.setItem('lp_' + data.pid.toUpperCase(), JSON.stringify({
     name: data.name, phone: data.phone,
     addrReg: data.addrReg, addrMail: data.addrMail,
