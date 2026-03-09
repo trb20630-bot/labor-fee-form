@@ -1387,30 +1387,26 @@ function downloadJPEG() {
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
   const month = (d.date||'').slice(0,7);
   const name  = d.name || '勞報單';
-  const filename = month + '_' + name + '_勞報單.jpg';
 
-  // 將 base64 轉成 Blob
-  const byteStr = atob(jpegBase64);
-  const ab = new ArrayBuffer(byteStr.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
-  const blob = new Blob([ab], { type: 'image/jpeg' });
+  // 顯示 overlay 讓用戶長按存圖（iOS/Android 通用）
+  const overlay = document.createElement('div');
+  overlay.id = 'dl-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  
+  const hint = document.createElement('div');
+  hint.style.cssText = 'color:#fff;font-size:15px;font-family:"Noto Sans TC",sans-serif;text-align:center;padding:0 20px;';
+  hint.innerHTML = '📥 <b>' + month + '_' + name + '_勞報單.jpg</b><br><br>📱 iOS：長按圖片 → 加入照片<br>🤖 Android：長按圖片 → 下載圖片<br><br><span style="font-size:12px;opacity:.7">點擊圖片以外的深色區域關閉</span>';
 
-  // iOS Safari：直接在新分頁開啟（長按可存圖）
-  const blobURL = URL.createObjectURL(blob);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS) {
-    window.open(blobURL, '_blank');
-    showToast('長按圖片 → 儲存至相片');
-  } else {
-    const link = document.createElement('a');
-    link.href = blobURL;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(blobURL), 3000);
-  }
+  const img = document.createElement('img');
+  img.src = 'data:image/jpeg;base64,' + jpegBase64;
+  img.style.cssText = 'max-width:92vw;max-height:70vh;border:2px solid #fff;border-radius:4px;display:block;';
+
+  overlay.appendChild(hint);
+  overlay.appendChild(img);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) document.body.removeChild(overlay);
+  });
+  document.body.appendChild(overlay);
 }
 
 // ── FILL STEP 3 ──
