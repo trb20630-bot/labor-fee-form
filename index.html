@@ -947,7 +947,7 @@ function fillPreview(prefix, d) {
   set(prefix+'-nhi', fmt(Math.floor(amt*0.0211)));
   set(prefix+'-d10', fmt(Math.floor(amt*0.10)));
   const noteMap = {
-    '9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。',
+    '9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。',
     '50':'薪資所得：依薪資扣繳稅額表辦理。',
     '9B':'稿費所得：給付金額達20,001元起扣10%。',
   };
@@ -1163,7 +1163,7 @@ function initVendorMode() {
     vset('v-bname',d.name); vset('v-pid',d.pid);
     vset('v-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||''
     ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail); vset('v-phone',d.phone);
-    const noteMap2={'9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
+    const noteMap2={'9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
     vset('v-ded-note',noteMap2[d.taxCode]||'');
     // Copy logo
     // Copy logo from step3 pdoc
@@ -1228,12 +1228,32 @@ async function confirmVendorSig(){
     const canvas = await html2canvas(vendorEl, {
       scale: 2,
       useCORS: true,
-      backgroundColor: '#fffaf4',
+      backgroundColor: '#ffffff',
       logging: false
     });
     sigWrap.removeChild(sigImg);
 
-    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    // 縮放成 A4 比例 (794 x 1123px @ 96dpi)
+    const A4_W = 1588; // 794 * 2 (scale=2)
+    const A4_H = 2246; // 1123 * 2
+    const a4Canvas = document.createElement('canvas');
+    a4Canvas.width  = A4_W;
+    a4Canvas.height = A4_H;
+    const a4Ctx = a4Canvas.getContext('2d');
+    a4Ctx.fillStyle = '#ffffff';
+    a4Ctx.fillRect(0, 0, A4_W, A4_H);
+
+    // 置中貼入，等比例縮放
+    const srcW = canvas.width;
+    const srcH = canvas.height;
+    const scale = Math.min(A4_W / srcW, A4_H / srcH);
+    const dstW  = Math.round(srcW * scale);
+    const dstH  = Math.round(srcH * scale);
+    const dstX  = Math.round((A4_W - dstW) / 2);
+    const dstY  = Math.round((A4_H - dstH) / 2);
+    a4Ctx.drawImage(canvas, dstX, dstY, dstW, dstH);
+
+    const jpegBase64 = a4Canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
     sessionStorage.setItem('lfJpeg', jpegBase64);
 
     // Step 2: Upload to Google (Sheets + Drive JPEG)
@@ -1285,7 +1305,7 @@ function fillStep3(sigURL, d) {
   const pActual = amt - pNhi - pTax10;
   set('p-amt-text',fmt(amt)+' 元整'); set('p-actual',fmt(pActual)+' 元');
   set('p-nhi',fmt(Math.floor(amt*0.0211)));  set('p-d10',fmt(Math.floor(amt*0.10)));
-  const noteMap={'9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
+  const noteMap={'9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
   set('p-ded-note',noteMap[d.taxCode]||'');
   const sig=document.getElementById('p-sig');
   if(sig){sig.src=sigURL;sig.style.display='block';}
