@@ -991,15 +991,20 @@ function buildShareURL() {
 }
 
 async function shortenURL(longURL) {
+  // Try cleanuri.com API
   try {
-    const api = 'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longURL);
-    const resp = await fetch(api);
+    const resp = await fetch('https://cleanuri.com/api/v1/shorten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'url=' + encodeURIComponent(longURL)
+    });
     if (resp.ok) {
-      const short = await resp.text();
-      if (short.startsWith('https://tinyurl.com/')) return short;
+      const json = await resp.json();
+      if (json.result_url) return json.result_url;
     }
   } catch(e) {}
-  return longURL; // fallback to original if fails
+  // Fallback: return original URL
+  return longURL;
 }
 
 async function shareViaLine() {
