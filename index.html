@@ -964,23 +964,45 @@ function closeSignPanel() {
 // ── SHARE ──
 function buildShareURL() {
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
-  // Encode: JSON → UTF-8 bytes → base64 → URL-safe
   const str = JSON.stringify(d);
   const bytes = new TextEncoder().encode(str);
   let binary = '';
   bytes.forEach(b => binary += String.fromCharCode(b));
-  // Make URL-safe: replace +, /, = that break URLs
   const encoded = btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
   const base = window.location.href.split('?')[0];
   return base + '?vendor=1&d=' + encoded;
 }
-function shareViaLine() {
-  const url = buildShareURL();
-  const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結完成簽名：\n' + url);
+
+async function shortenURL(longURL) {
+  try {
+    const api = 'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longURL);
+    const resp = await fetch(api);
+    if (resp.ok) {
+      const short = await resp.text();
+      if (short.startsWith('https://tinyurl.com/')) return short;
+    }
+  } catch(e) {}
+  return longURL; // fallback to original if fails
+}
+
+async function shareViaLine() {
+  const btn = document.querySelector('.btn-line');
+  const orig = btn.textContent;
+  btn.textContent = '產生連結中…'; btn.disabled = true;
+  const longURL = buildShareURL();
+  const url = await shortenURL(longURL);
+  btn.textContent = orig; btn.disabled = false;
+  const msg = encodeURIComponent('【裸肌股份有限公司 勞務報酬單】\n請點擊連結確認內容並完成簽名：\n' + url);
   window.open('https://line.me/R/msg/text/?' + msg, '_blank');
 }
-function shareViaMail() {
-  const url = buildShareURL();
+
+async function shareViaMail() {
+  const btn = document.querySelector('.btn-mail');
+  const orig = btn.textContent;
+  btn.textContent = '產生連結中…'; btn.disabled = true;
+  const longURL = buildShareURL();
+  const url = await shortenURL(longURL);
+  btn.textContent = orig; btn.disabled = false;
   const subject = encodeURIComponent('【裸肌股份有限公司】勞務報酬單 — 請簽名');
   const body = encodeURIComponent('您好，\n\n請點擊以下連結，確認勞務報酬單內容並完成簽名：\n\n' + url + '\n\n感謝配合。\n裸肌股份有限公司');
   window.open('mailto:?subject='+subject+'&body='+body);
