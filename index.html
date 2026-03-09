@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>勞務報酬單</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -460,7 +461,6 @@ body.vendor-mode #vendor-mode {
       </div>
       <div class="ded" id="ded">
         <div class="ded-cell"><div class="dr">2.11%</div><div class="da" id="d-nhi">—</div><div class="dl">二代健保補充費</div></div>
-        <div class="ded-cell"><div class="dr">5%</div><div class="da" id="d-5">—</div><div class="dl">固定人員扣稅</div></div>
         <div class="ded-cell"><div class="dr">10%</div><div class="da" id="d-10">—</div><div class="dl">執行業務扣稅</div></div>
       </div>
     </div>
@@ -472,9 +472,8 @@ body.vendor-mode #vendor-mode {
     <div class="item-body">
       <div class="item-label">所得格式代號</div>
       <div class="radio-row">
-        <label><input type="radio" name="tax" value="50"> ○50　薪資所得</label>
-        <label><input type="radio" name="tax" value="9A"> ○9A　執行業務</label>
-        <label><input type="radio" name="tax" value="9B"> ○9B　稿費</label>
+        <label><input type="radio" name="tax" value="9A" onchange="recalcActual()"> ○9A　執行業務</label>
+        <label><input type="radio" name="tax" value="9B" onchange="recalcActual()"> ○9B　稿費</label>
       </div>
     </div>
   </div>
@@ -568,7 +567,6 @@ body.vendor-mode #vendor-mode {
       </div>
       <div class="pded">
         <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="s2p-nhi"></div></div>
-        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="s2p-d5"></div></div>
         <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="s2p-d10"></div></div>
       </div>
     </div>
@@ -639,12 +637,11 @@ body.vendor-mode #vendor-mode {
       </div>
       <div class="pded">
         <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="v-nhi"></div></div>
-        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="v-d5"></div></div>
-        <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="v-d10"></div></div>
+                <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="v-d10"></div></div>
       </div>
     </div>
     <div style="font-size:12px;margin:6px 0;">
-      所得格式代號：○50（薪資）&nbsp;○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      所得格式代號：○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
       <span style="font-weight:700;color:var(--accent);">已選：</span><span id="v-taxcode"></span>
     </div>
     <hr class="pdiv">
@@ -666,7 +663,8 @@ body.vendor-mode #vendor-mode {
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap;">
       <button class="btn-ghost" onclick="clearVendorSig()">重新簽名</button>
-      <button class="btn-next" onclick="confirmVendorSig()">確認並下載 PDF</button>
+      <button class="btn-confirm" id="btn-confirm-sig" onclick="confirmVendorSig()">✅ 確認送出</button>
+      <button class="btn-dl" id="btn-dl-jpeg" style="display:none;" onclick="downloadJPEG()">📥 下載圖檔</button>
     </div>
   </div>
 </div>
@@ -693,12 +691,11 @@ body.vendor-mode #vendor-mode {
       </div>
       <div class="pded">
         <div><div class="dr">2.11%　二代健保補充費</div><div class="dn" id="p-nhi"></div></div>
-        <div><div class="dr">5%　固定人員扣稅</div><div class="dn" id="p-d5"></div></div>
-        <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="p-d10"></div></div>
+                <div><div class="dr">10%　執行業務扣稅</div><div class="dn" id="p-d10"></div></div>
       </div>
     </div>
     <div style="font-size:12px;margin:6px 0;">
-      所得格式代號：○50（薪資）&nbsp;○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
+      所得格式代號：○9A（執行業務）&nbsp;○9B（稿費）&nbsp;
       <span style="font-weight:700;color:#e07b1a;">已選：</span><span id="p-taxcode"></span>
     </div>
     <hr class="pdiv">
@@ -778,17 +775,34 @@ function calcAmt(el) {
   }
   el._updating = false;
   const amt = parseInt(raw) || 0;
-  document.getElementById('f-actual').textContent = amt > 0 ? fmt(amt) + ' 元' : '—';
   const ded = document.getElementById('ded');
   if (amt > 0) {
     ded.classList.add('show');
-    // 二代健保：單次給付 >= 20,000 才扣 2.11%
-    document.getElementById('d-nhi').textContent = amt >= 20000 ? fmt(Math.floor(amt * 0.0211)) : '未達起扣點（20,000元）';
-    // 5% 固定人員：依薪資扣繳稅額表，無起扣點限制
-    document.getElementById('d-5').textContent   = fmt(Math.floor(amt * 0.05));
-    // 執行業務 10%：稅額超過 2,000元（給付 > 20,000元）才扣
-    document.getElementById('d-10').textContent  = amt > 20000 ? fmt(Math.floor(amt * 0.10)) : '未達起扣點（20,000元）';
-  } else ded.classList.remove('show');
+    const nhi   = amt >= 20000 ? Math.floor(amt * 0.0211) : 0;
+    const tax10 = amt >= 20010 ? Math.floor(amt * 0.10) : 0;
+    document.getElementById('d-nhi').textContent = amt >= 20000 ? fmt(nhi) : '未達起扣點（20,000元）';
+    document.getElementById('d-10').textContent  = amt >= 20010 ? fmt(tax10) : '未達起扣點（未滿20,010元）';
+    // 實付金額：依目前所選格式計算
+    updateActual(amt, nhi, tax10);
+  } else {
+    ded.classList.remove('show');
+    document.getElementById('f-actual').textContent = '—';
+  }
+}
+
+
+function recalcActual() {
+  const raw = document.getElementById('f-amount').value.replace(/[^0-9]/g,'');
+  const amt = parseInt(raw) || 0;
+  if (amt <= 0) return;
+  const nhi   = amt >= 20000 ? Math.floor(amt * 0.0211) : 0;
+  const tax10 = amt >= 20010 ? Math.floor(amt * 0.10) : 0;
+  updateActual(amt, nhi, tax10);
+}
+function updateActual(amt, nhi, tax10) {
+  let deduct = nhi + tax10;
+  const actual = amt - deduct;
+  document.getElementById('f-actual').textContent = amt > 0 ? fmt(actual) + ' 元' : '—';
 }
 
 // ── WORK DROPDOWN ──
@@ -926,9 +940,11 @@ function fillPreview(prefix, d) {
   set(prefix+'-taxcode', codeMap[d.taxCode]||'（未選擇）');
   const amt = parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
   set(prefix+'-amt-text', fmt(amt)+' 元整');
-  set(prefix+'-actual', fmt(amt)+' 元');
+  const nhi2   = amt >= 20000 ? Math.floor(amt * 0.0211) : 0;
+  const tax10b = amt >= 20010 ? Math.floor(amt * 0.10) : 0;
+  const actual2 = amt - nhi2 - tax10b;
+  set(prefix+'-actual', fmt(actual2)+' 元');
   set(prefix+'-nhi', fmt(Math.floor(amt*0.0211)));
-  set(prefix+'-d5',  fmt(Math.floor(amt*0.05)));
   set(prefix+'-d10', fmt(Math.floor(amt*0.10)));
   const noteMap = {
     '9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。',
@@ -1136,9 +1152,11 @@ function initVendorMode() {
     const amt2=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
     const vset=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||''};
     vset('v-name2',d.name); vset('v-work',d.work);
-    vset('v-actual',fmt(amt2)+' 元'); vset('v-amt-text',fmt(amt2)+' 元整');
+    const vNhi   = amt2 >= 20000 ? Math.floor(amt2 * 0.0211) : 0;
+    const vTax10 = amt2 >= 20010 ? Math.floor(amt2 * 0.10) : 0;
+    const vActual = amt2 - vNhi - vTax10;
+    vset('v-actual', fmt(vActual)+' 元'); vset('v-amt-text',fmt(amt2)+' 元整');
     vset('v-nhi',fmt(Math.floor(amt2*0.0211)));
-    vset('v-d5', fmt(Math.floor(amt2*0.05)));
     vset('v-d10',fmt(Math.floor(amt2*0.10)));
     vset('v-taxcode',codeMap2[d.taxCode]||'（未選擇）');
     vset('v-pay',payMap2[d.pay]||d.pay||'');
@@ -1188,20 +1206,64 @@ function vUp(){_vdrawing=false;}
 function clearVendorSig(){_vctx.clearRect(0,0,_vc.width,_vc.height);_vhasSig=false;document.getElementById('vendor-sig-ph').classList.remove('hidden');}
 async function confirmVendorSig(){
   if(!_vhasSig){showToast('⚠ 請先完成簽名');return;}
-  const sigURL=_vc.toDataURL('image/png');
-  sessionStorage.setItem('lfsig',sigURL);
-  const d=JSON.parse(sessionStorage.getItem('lfd')||'{}');
-  fillStep3(sigURL, d);
-  document.getElementById('vendor-mode').classList.remove('show');
-  const s3v = document.getElementById('step3');
-  s3v.style.display='block';
-  s3v.classList.add('print-active');
-  showToast('✓ 簽名完成，上傳資料中⋯', true);
-  // Upload data to Google Sheets (non-blocking)
-  uploadToGoogle(d, '').then(ok => {
+  const btn = document.getElementById('btn-confirm-sig');
+  btn.disabled = true;
+  btn.textContent = '上傳中⋯';
+  const sigURL = _vc.toDataURL('image/png');
+  sessionStorage.setItem('lfsig', sigURL);
+  const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
+
+  // Step 1: 截圖整個 vendor-mode 勞報單（含簽名）
+  showToast('截圖中，請稍候⋯', true);
+  try {
+    const vendorEl = document.getElementById('vendor-mode');
+    // Temporarily embed signature into canvas area for screenshot
+    const sigImg = document.createElement('img');
+    sigImg.src = sigURL;
+    sigImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;';
+    const sigWrap = document.getElementById('vendor-sig-wrap');
+    sigWrap.style.position = 'relative';
+    sigWrap.appendChild(sigImg);
+
+    const canvas = await html2canvas(vendorEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#fffaf4',
+      logging: false
+    });
+    sigWrap.removeChild(sigImg);
+
+    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    sessionStorage.setItem('lfJpeg', jpegBase64);
+
+    // Step 2: Upload to Google (Sheets + Drive JPEG)
+    showToast('上傳 Google 中⋯', true);
+    const ok = await uploadToGoogle(d, jpegBase64);
     console.log('Google 上傳:', ok ? '成功' : '失敗');
-  });
-  setTimeout(()=>{window.print();s3v.classList.remove('print-active');s3v.style.display='none';showVendorDone();},800);
+
+    // Step 3: Show success + download button
+    btn.textContent = '✅ 已送出';
+    showToast('✓ 資料已上傳 Google！', false);
+    document.getElementById('btn-dl-jpeg').style.display = 'inline-block';
+
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = '✅ 確認送出';
+    showToast('⚠ 截圖失敗，請重試');
+  }
+}
+
+function downloadJPEG() {
+  const jpegBase64 = sessionStorage.getItem('lfJpeg');
+  if (!jpegBase64) { showToast('⚠ 請先按確認送出'); return; }
+  const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  const month = (d.date||'').slice(0,7);
+  const name  = d.name || '勞報單';
+  const link  = document.createElement('a');
+  link.href     = 'data:image/jpeg;base64,' + jpegBase64;
+  link.download = month + '_' + name + '_勞報單.jpg';
+  link.click();
 }
 
 // ── FILL STEP 3 ──
@@ -1218,8 +1280,11 @@ function fillStep3(sigURL, d) {
   const codeMap={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
   set('p-taxcode',codeMap[d.taxCode]||'（未選擇）');
   const amt=parseInt((d.amount||'0').replace(/[^0-9]/g,''))||0;
-  set('p-amt-text',fmt(amt)+' 元整'); set('p-actual',fmt(amt)+' 元');
-  set('p-nhi',fmt(Math.floor(amt*0.0211))); set('p-d5',fmt(Math.floor(amt*0.05))); set('p-d10',fmt(Math.floor(amt*0.10)));
+  const pNhi   = amt >= 20000 ? Math.floor(amt * 0.0211) : 0;
+  const pTax10 = amt >= 20010 ? Math.floor(amt * 0.10) : 0;
+  const pActual = amt - pNhi - pTax10;
+  set('p-amt-text',fmt(amt)+' 元整'); set('p-actual',fmt(pActual)+' 元');
+  set('p-nhi',fmt(Math.floor(amt*0.0211)));  set('p-d10',fmt(Math.floor(amt*0.10)));
   const noteMap={'9A':'1. 二代健保納人員給付金額達25,250元，執行業務所得給付金額達20,000元。\n2. 扣繳稅務業人員給付金額達86,001元，執行業務收入給付支付金額達20,001元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
   set('p-ded-note',noteMap[d.taxCode]||'');
   const sig=document.getElementById('p-sig');
@@ -1238,11 +1303,11 @@ if(document.readyState==='loading'){
 // ── UPLOAD TO GOOGLE DRIVE + SHEETS ──
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwM98dF6jWSpKma05K6u1ZUsOR5OSc8hvpxtmTEcBl5GZzc2YVhtMDwvpEApl4U-svUag/exec';
 
-async function uploadToGoogle(data, pdfBase64) {
+async function uploadToGoogle(data, jpegBase64) {
   try {
     const payload = {
       ...data,
-      pdfBase64: pdfBase64 || ''
+      jpegBase64: jpegBase64 || ''
     };
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
