@@ -1337,16 +1337,36 @@ async function confirmVendorSig(){
     sigWrap.style.position = 'relative';
     sigWrap.appendChild(sigImg);
 
+    // 固定 A4 直向寬度再截圖
+    const A4_PX_W = 794; // A4 @ 96dpi
+    const origWidth = vendorEl.style.width;
+    const origMaxWidth = vendorEl.style.maxWidth;
+    vendorEl.style.width = A4_PX_W + 'px';
+    vendorEl.style.maxWidth = A4_PX_W + 'px';
+    vendorEl.style.margin = '0';
+    // 強制子元素也符合寬度
+    const pdocEl = vendorEl.querySelector('.pdoc');
+    const origPdocMaxWidth = pdocEl ? pdocEl.style.maxWidth : '';
+    if (pdocEl) { pdocEl.style.maxWidth = '100%'; pdocEl.style.margin = '0'; }
+
+    await new Promise(r => setTimeout(r, 100)); // 等重排
+
     const canvas = await html2canvas(vendorEl, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false
+      logging: false,
+      width: A4_PX_W,
+      windowWidth: A4_PX_W
     });
+
+    // 還原樣式
+    vendorEl.style.width = origWidth;
+    vendorEl.style.maxWidth = origMaxWidth;
+    if (pdocEl) pdocEl.style.maxWidth = origPdocMaxWidth;
     sigWrap.removeChild(sigImg);
 
-    // 直接輸出截圖，填滿寬度，不留白邊
-    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.93).split(',')[1];
     sessionStorage.setItem('lfJpeg', jpegBase64);
 
     // Step 2: Upload to Google (Sheets + Drive JPEG)
