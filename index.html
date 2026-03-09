@@ -1042,7 +1042,10 @@ function getLogoB64() {
 function fillPreview(prefix, d) {
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v||''; };
   set(prefix+'-name', d.name); set(prefix+'-work', d.work);
-  set(prefix+'-phone', d.phone); set(prefix+'-areg', d.addrReg); set(prefix+'-amail', d.addrMail);
+  // 電話統一格式：只留數字再加一個 -
+  const rawP = (d.phone||'').replace(/[^0-9]/g,'');
+  const fmtP = rawP.length > 4 ? rawP.slice(0,4)+'-'+rawP.slice(4) : rawP;
+  set(prefix+'-phone', fmtP); set(prefix+'-areg', d.addrReg); set(prefix+'-amail', d.addrMail);
   set(prefix+'-bname', d.name); set(prefix+'-pid', d.pid);
   set(prefix+'-bacc', d.bcode ? d.bcode+'　'+(d.bacc||'') : d.bacc||'');
   set(prefix+'-date', d.date);
@@ -1078,7 +1081,7 @@ function toStep2() {
   }
   const data = {
     name, pid, work, amount, date,
-    phone:   document.getElementById('f-phone').value,
+    phone:   (()=>{ const r=document.getElementById('f-phone').value.replace(/[^0-9]/g,''); return r.length>4?r.slice(0,4)+'-'+r.slice(4):r; })(),
     addrReg: document.getElementById('f-addr-reg').value,
     addrMail:document.getElementById('f-addr-mail').value,
     taxCode: document.querySelector('input[name=tax]:checked')?.value||'',
@@ -1261,7 +1264,9 @@ function initVendorMode() {
     vset('v-pay',payMap2[d.pay]||d.pay||'');
     vset('v-bname',d.name); vset('v-pid',d.pid);
     vset('v-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||''
-    ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail); vset('v-phone',d.phone);
+    ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail);
+    const rawVP = (d.phone||'').replace(/[^0-9]/g,'');
+    vset('v-phone', rawVP.length > 4 ? rawVP.slice(0,4)+'-'+rawVP.slice(4) : rawVP);
     const noteMap2={'9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
     vset('v-ded-note',noteMap2[d.taxCode]||'');
     // Copy logo
@@ -1414,7 +1419,9 @@ function fillStep3(sigURL, d) {
   d = d || JSON.parse(sessionStorage.getItem('lfd')||'{}');
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v||''; };
   set('p-name',d.name); set('p-work',d.work);
-  set('p-phone',d.phone); set('p-areg',d.addrReg); set('p-amail',d.addrMail);
+  const rawPP = (d.phone||'').replace(/[^0-9]/g,'');
+  set('p-phone', rawPP.length > 4 ? rawPP.slice(0,4)+'-'+rawPP.slice(4) : rawPP);
+  set('p-areg',d.addrReg); set('p-amail',d.addrMail);
   set('p-bname',d.name); set('p-pid',d.pid);
   set('p-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||'');
   set('p-date',d.date);
