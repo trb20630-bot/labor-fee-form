@@ -1079,8 +1079,13 @@ function toStep2() {
   if (!name || !pid || !work || !amount || !date) {
     showToast('⚠ 請填寫必填欄位（姓名、身分證、工作內容、金額、日期）'); return;
   }
+  const _amt   = parseInt((amount||'0').replace(/[^0-9]/g,''))||0;
+  const _nhi   = _amt >= 20000 ? Math.floor(_amt * 0.0211) : 0;
+  const _tax10 = _amt >= 20010 ? Math.floor(_amt * 0.10)   : 0;
   const data = {
     name, pid, work, amount, date,
+    nhi:    _nhi,
+    tax10:  _tax10,
     phone:   (()=>{ const r=document.getElementById('f-phone').value.replace(/[^0-9]/g,''); return r.length>4?r.slice(0,4)+'-'+r.slice(4):r; })(),
     addrReg: document.getElementById('f-addr-reg').value,
     addrMail:document.getElementById('f-addr-mail').value,
@@ -1451,7 +1456,7 @@ if(document.readyState==='loading'){
 
 
 // ── UPLOAD TO GOOGLE DRIVE + SHEETS ──
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwM98dF6jWSpKma05K6u1ZUsOR5OSc8hvpxtmTEcBl5GZzc2YVhtMDwvpEApl4U-svUag/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgyG7y8HXYuXrKTjox7K69pOuqFYze-kSK88G-if2aasc5x4eKxWcUwtUUligs6UtINA/exec';
 
 async function uploadToGoogle(data, jpegBase64) {
   try {
