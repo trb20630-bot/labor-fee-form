@@ -792,13 +792,11 @@ function calcAmt(el) {
   // 輸入法組字中不處理（防止重複觸發）
   if (el._composing) return;
   const raw = el.value.replace(/[^0-9]/g,'');
-  const pos = el.selectionStart;
-  const oldLen = el.value.length;
   if (raw) {
     const formatted = parseInt(raw).toLocaleString('zh-TW');
     el.value = formatted;
     const newLen = formatted.length;
-    el.selectionStart = el.selectionEnd = pos + (newLen - oldLen);
+    el.selectionStart = el.selectionEnd = newLen;
   } else {
     el.value = '';
   }
