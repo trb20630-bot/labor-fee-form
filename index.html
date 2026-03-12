@@ -455,7 +455,7 @@ body.vendor-mode #vendor-mode {
     <div class="item-no">3</div>
     <div class="item-body">
       <div class="item-label">連絡電話</div>
-      <input type="tel" id="f-phone" placeholder="0912-345678" oninput="fmtPhone(this)" maxlength="12">
+      <input type="tel" id="f-phone" placeholder="0912-345678" oninput="fmtPhone(this)" oncompositionstart="this._composing=true" oncompositionend="this._composing=false;fmtPhone(this)" maxlength="12">
     </div>
   </div>
 
@@ -484,7 +484,7 @@ body.vendor-mode #vendor-mode {
     <div class="item-body">
       <div class="item-label">應付金額（元）<span class="req">*</span></div>
       <div class="amt-row">
-        <input type="text" id="f-amount" placeholder="例：50,000" oninput="calcAmt(this)">
+        <input type="text" id="f-amount" placeholder="例：50,000" oninput="calcAmt(this)" oncompositionstart="this._composing=true" oncompositionend="this._composing=false;calcAmt(this)">
         <div class="amt-eq">=</div>
         <div class="amt-result" id="f-actual">—</div>
       </div>
@@ -780,6 +780,7 @@ const BANKS = [
 
 // ── PHONE FORMAT ──
 function fmtPhone(el) {
+  if (el._composing) return;
   let v = el.value.replace(/[^0-9]/g,'');
   if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
   el.value = v;
@@ -788,9 +789,8 @@ function fmtPhone(el) {
 // ── AMOUNT ──
 function fmt(n) { return n.toLocaleString('zh-TW'); }
 function calcAmt(el) {
-  // 防止輸入法重複觸發
-  if (el._updating) return;
-  el._updating = true;
+  // 輸入法組字中不處理（防止重複觸發）
+  if (el._composing) return;
   const raw = el.value.replace(/[^0-9]/g,'');
   const pos = el.selectionStart;
   const oldLen = el.value.length;
@@ -802,7 +802,6 @@ function calcAmt(el) {
   } else {
     el.value = '';
   }
-  el._updating = false;
   const amt = parseInt(raw) || 0;
   const ded = document.getElementById('ded');
   if (amt > 0) {
