@@ -789,6 +789,13 @@ function fmtPhone(el) {
 
 // ── AMOUNT ──
 function fmt(n) { return n.toLocaleString('zh-TW'); }
+function toROC(dateStr) {
+  // dateStr: '2026-03-12' → '115/3/12'
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return (y - 1911) + '/' + m + '/' + d;
+}
+
 function calcAmt(el) {
   // 輸入法組字中不處理（防止重複觸發）
   if (el._composing) return;
@@ -1274,7 +1281,7 @@ function initVendorMode() {
     ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail);
     const rawVP = (d.phone||'').replace(/[^0-9]/g,'');
     vset('v-phone', rawVP.length > 4 ? rawVP.slice(0,4)+'-'+rawVP.slice(4) : rawVP);
-    vset('v-date', d.date || new Date().toISOString().split('T')[0]);
+    vset('v-date', toROC(d.date || new Date().toISOString().split('T')[0]));
     const noteMap2={'9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
     vset('v-ded-note',noteMap2[d.taxCode]||'');
     // Copy logo
@@ -1437,7 +1444,7 @@ function fillStep3(sigURL, d) {
   set('p-areg',d.addrReg); set('p-amail',d.addrMail);
   set('p-bname',d.name); set('p-pid',d.pid);
   set('p-bacc',d.bcode?d.bcode+'　'+(d.bacc||''):d.bacc||'');
-  set('p-date',d.date);
+  set('p-date', toROC(d.date));
   const payMap={cash:'現金',transfer:'銀行轉帳',check:'掛號支票'};
   set('p-pay',payMap[d.pay]||d.pay);
   const codeMap={'50':'○50 薪資工資','9A':'○9A 執行業務','9B':'○9B 稿費'};
