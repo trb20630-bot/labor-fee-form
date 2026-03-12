@@ -681,6 +681,7 @@ body.vendor-mode #vendor-mode {
     <div class="pr"><span class="pl">戶籍地址：</span><span class="pv" id="v-areg"></span></div>
     <div class="pr"><span class="pl">通訊地址：</span><span class="pv" id="v-amail"></span></div>
     <div class="pr"><span class="pl">聯絡電話：</span><span class="pv" id="v-phone"></span></div>
+    <div class="pr"><span class="pl">填單日期：</span><span class="pv" id="v-date"></span></div>
     <hr class="pdiv">
     <!-- 大簽名框 -->
     <div style="font-size:13px;font-weight:600;margin:12px 0 8px;letter-spacing:.5px;color:var(--ink);">
@@ -1273,6 +1274,7 @@ function initVendorMode() {
     ); vset('v-areg',d.addrReg); vset('v-amail',d.addrMail);
     const rawVP = (d.phone||'').replace(/[^0-9]/g,'');
     vset('v-phone', rawVP.length > 4 ? rawVP.slice(0,4)+'-'+rawVP.slice(4) : rawVP);
+    vset('v-date', d.date || new Date().toISOString().split('T')[0]);
     const noteMap2={'9A':'1. 執行業務所得給付金額達20,000元。\n2. 執行業務收入給付支付金額達20,010元，即稅額超過2,000元。','50':'薪資所得：依薪資扣繳稅額表辦理。','9B':'稿費所得：給付金額達20,001元起扣10%。'};
     vset('v-ded-note',noteMap2[d.taxCode]||'');
     // Copy logo
