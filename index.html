@@ -791,15 +791,19 @@ function fmt(n) { return n.toLocaleString('zh-TW'); }
 function calcAmt(el) {
   // 輸入法組字中不處理（防止重複觸發）
   if (el._composing) return;
+  // 防止遞迴觸發
+  if (el._formatting) return;
+  el._formatting = true;
   const raw = el.value.replace(/[^0-9]/g,'');
   if (raw) {
-    const formatted = parseInt(raw).toLocaleString('zh-TW');
+    const formatted = parseInt(raw).toLocaleString('en-US');
     el.value = formatted;
     const newLen = formatted.length;
     el.selectionStart = el.selectionEnd = newLen;
   } else {
     el.value = '';
   }
+  el._formatting = false;
   const amt = parseInt(raw) || 0;
   const ded = document.getElementById('ded');
   if (amt > 0) {
@@ -1318,6 +1322,11 @@ async function confirmVendorSig(){
   const sigURL = _vc.toDataURL('image/png');
   sessionStorage.setItem('lfsig', sigURL);
   const d = JSON.parse(sessionStorage.getItem('lfd')||'{}');
+  // 廠商連結沒有帶日期，自動補上今天
+  if (!d.date) {
+    d.date = new Date().toISOString().split('T')[0];
+    sessionStorage.setItem('lfd', JSON.stringify(d));
+  }
 
   // Step 1: 截圖整個 vendor-mode 勞報單（含簽名）
   showToast('截圖中，請稍候⋯', true);
