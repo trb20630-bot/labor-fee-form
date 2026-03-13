@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>小花著衣店｜發票開立</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Mono:wght@400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0a;
+  --paper: #f8f6f0;
+  --warm: #f0ede6;
+  --accent: #c45e1a;
+  --accent2: #e8956a;
+  --muted: #888;
+  --border: #e0ddd6;
+  --success: #2d6a4f;
+  --red: #c0392b;
+  --blue: #1a1a2e;
+  --selected: #fff3e8;
+  --gold: #b8860b;
+  --cream: #fdfaf4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-image: 
+    radial-gradient(ellipse at 20% 0%, rgba(196,94,26,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(184,134,11,0.05) 0%, transparent 50%);
+}
+
+/* ── Header ── */
+header {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 28px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--gold) 100%);
+}
+.brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+.sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.btn-hdr {
+  margin-left: auto;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  border-radius: 3px;
+  padding: 7px 18px;
+  font-size: 0.75rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.btn-hdr:hover {
+  background: #a84e10;
+}
+
+/* ── Main ── */
+.main-wrap {
+  width: 100%;
+  max-width: 460px;
+  padding: 36px 20px 80px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 
+    0 1px 3px rgba(0,0,0,0.04),
+    0 8px 32px rgba(0,0,0,0.06),
+    inset 0 0 0 1px rgba(0,0,0,0.04);
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 28px; right: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.4;
+}
+
+/* ── Info Lines ── */
+.info-line { display: flex; align-items: center; gap: 12px; }
+.lbl {
+  font-size: 0.68rem;
+  color: var(--muted);
+  min-width: 60px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.val {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.92rem;
+  color: var(--ink);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.val.accent {
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+input[type="date"]#inv-date {
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  border-radius: 0;
+  padding: 4px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input[type="date"]#inv-date:focus { border-color: var(--accent); }
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 -4px;
+  opacity: 0.5;
+}
+
+/* ── Amount ── */
+.amount-wrap { display: flex; flex-direction: column; gap: 10px; }
+.amount-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.amount-row {
+  display: flex; align-items: stretch;
+  border: none;
+  border-bottom: 2px solid var(--border);
+  background: transparent;
+  transition: border-color 0.2s;
+}
+.amount-row:focus-within { border-color: var(--accent); }
+.pfx {
+  padding: 0 12px 0 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem;
+  color: var(--muted);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: transparent;
+  border-right: none;
+}
+#inv-amount {
+  border: none; outline: none; background: transparent;
+  flex: 1; padding: 0 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 2rem;
+  color: var(--ink);
+  height: 52px;
+  width: 0;
+  letter-spacing: -0.02em;
+}
+#inv-amount::placeholder { color: #ddd; font-size: 1.4rem; }
+.hint-line {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: right;
+  min-height: 18px;
+  letter-spacing: 0.06em;
+  font-family: 'Space Mono', monospace;
+}
+.hint-line.err { color: var(--red); }
+
+/* ── Buttons ── */
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: 2px;
+  padding: 15px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.2s;
+}
+.btn:hover::after { background: rgba(255,255,255,0.1); }
+.btn:active { transform: scale(0.99); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+.btn-confirm {
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+.btn-history {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  letter-spacing: 0.1em;
+}
+.btn-history:hover { background: var(--ink); color: #fff; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--ink);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 2px;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  z-index: 9999;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  pointer-events: none;
+  border-left: 3px solid var(--accent);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.is-err { border-left-color: var(--red); }
+
+/* ── Overlay Base ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,10,10,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff;
+  border-radius: 2px;
+  width: 100%; max-width: 480px; max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.12);
+  transition: opacity 0.2s;
+}
+.mhdr {
+  background: var(--ink);
+  color: #fff;
+  padding: 16px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+}
+.mhdr::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 22px; right: 22px;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+.mtitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+.mclose {
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-size: 1.2rem; cursor: pointer; line-height: 1;
+  transition: color 0.15s;
+  padding: 2px 4px;
+}
+.mclose:hover { color: #fff; }
+
+/* ── Setup Modal ── */
+.setup-body {
+  padding: 28px 24px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 0.66rem; color: var(--muted);
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.field input, .field select {
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  border-radius: 0;
+  padding: 8px 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; color: var(--ink);
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+.field select {
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.85rem; cursor: pointer;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.fhint { font-size: 0.68rem; color: var(--muted); }
+.ferr { font-size: 0.68rem; color: var(--red); display: none; }
+.field.has-err input, .field.has-err select { border-color: var(--red); }
+.field.has-err .ferr { display: block; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.auto-end {
+  border-bottom: 1.5px solid var(--border);
+  padding: 8px 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; color: var(--accent);
+  background: transparent;
+}
+.btn-setup {
+  background: var(--ink); color: #fff;
+  padding: 13px; border-radius: 2px; margin-top: 4px;
+  letter-spacing: 0.1em;
+}
+.btn-setup:hover { background: #222; }
+
+/* ── History Modal ── */
+.msummary { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sitem {
+  flex: 1; padding: 14px 20px;
+  background: var(--warm);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sitem + .sitem { border-left: 1px solid var(--border); }
+.sk {
+  font-size: 0.64rem; color: var(--muted);
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.sv {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.92rem; font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mtable-wrap { overflow-y: auto; flex: 1; }
+table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--warm);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px; text-align: left;
+  font-size: 0.64rem; color: var(--muted);
+  font-weight: 400; letter-spacing: 0.14em;
+  text-transform: uppercase; white-space: nowrap;
+}
+tbody tr {
+  cursor: pointer;
+  border-bottom: 1px solid #f5f2ee;
+  transition: background 0.15s;
+}
+tbody tr:hover:not(.edit-row) { background: #faf8f4; }
+tbody tr.sel { background: #fff8f2; }
+tbody tr.voided td:not(.vcell) { color: var(--muted); opacity: 0.5; }
+tbody tr.voided { background: #fafafa; }
+td { padding: 11px 12px; vertical-align: middle; }
+td.seq-td {
+  font-family: 'Space Mono', monospace;
+  color: #ccc; font-size: 0.72rem; width: 32px;
+}
+td.amt-td {
+  font-family: 'Space Mono', monospace;
+  text-align: right; font-weight: 700;
+  letter-spacing: 0.02em;
+}
+td.vcell { width: 80px; text-align: right; }
+.btn-unvoid {
+  background: none; border: 1px solid var(--accent); color: var(--accent);
+  border-radius: 2px; padding: 3px 8px; font-size: 0.68rem;
+  cursor: pointer; font-family: 'Noto Sans TC', sans-serif; white-space: nowrap;
+  transition: all 0.15s;
+}
+.btn-unvoid:hover { background: var(--accent); color: #fff; }
+.edit-row { background: #fffbf7 !important; }
+.einput {
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  border-radius: 0;
+  padding: 4px 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; color: var(--ink);
+  background: transparent; outline: none;
+}
+input[type="date"].einput { width: 130px; }
+input[type="number"].einput { width: 90px; text-align: right; }
+.mfooter {
+  border-top: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex; gap: 10px;
+  background: #fff; flex-shrink: 0;
+}
+.mfooter .btn { padding: 13px; font-size: 0.82rem; letter-spacing: 0.08em; flex: 1; }
+.btn-void {
+  background: transparent;
+  color: var(--red);
+  border: 1.5px solid var(--red);
+}
+.btn-void:hover:not(:disabled) { background: var(--red); color: #fff; }
+.btn-edit {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-edit:hover:not(:disabled) { background: #333; }
+
+
+/* ── Confirm Box ── */
+.coverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9000; padding: 16px;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.coverlay.open { opacity: 1; pointer-events: all; }
+.cbox {
+  background: #fff; border-radius: 10px;
+  padding: 28px 22px 20px; width: 100%; max-width: 300px; text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  transition: opacity 0.15s;
+}
+.coverlay.open .cbox { opacity: 1; }
+.ctitle { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.cdesc { font-size: 0.8rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+.cbtns { display: flex; gap: 10px; }
+.cbtns .btn { padding: 11px; font-size: 0.88rem; }
+.btn-cno { background: var(--warm); color: var(--ink); border: 1px solid var(--border); }
+.btn-cyes { background: var(--accent); color: #fff; }
+
+@media (max-width: 380px) {
+  .card, .setup-body { padding: 20px 16px; }
+  .row2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">小花著衣店</span>
+  <span class="sub">INVOICE</span>
+  <button class="btn-hdr" onclick="openSetup()">字軌設定</button>
+</header>
+
+<div class="main-wrap">
+  <div class="card" id="main-card">
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="info-line">
+        <span class="lbl">開立日期</span>
+        <input type="date" id="inv-date" onchange="onDateChange()">
+      </div>
+      <div class="info-line">
+        <span class="lbl">發票號碼</span>
+        <span class="val accent" id="disp-num">—</span>
+      </div>
+    </div>
+
+    <div class="amount-wrap"><div class="amount-label">含稅金額</div>
+      <div class="amount-row">
+        <span class="pfx">$</span>
+        <input type="number" id="inv-amount" placeholder="輸入金額" min="1"
+          inputmode="numeric" oninput="onAmtInput()" onkeydown="if(event.key==='Enter')doConfirm()">
+      </div>
+      <div class="hint-line" id="amt-hint"></div>
+    </div>
+
+    <button class="btn btn-confirm" id="btn-confirm" onclick="doConfirm()" disabled>確認輸入</button>
+    <button class="btn btn-history" onclick="openHistory()">歷史紀錄</button>
+  </div>
+</div>
+
+<!-- ── SETUP MODAL ── -->
+<div class="overlay" id="setup-overlay">
+  <div class="modal">
+    <div class="mhdr">
+      <span class="mtitle">字軌與號碼設定</span>
+      <button class="mclose" onclick="closeSetup()">×</button>
+    </div>
+    <div class="setup-body">
+      <div class="row2">
+        <div class="field" id="sf-prefix">
+          <label>字軌</label>
+          <input type="text" id="s-prefix" placeholder="VV" maxlength="2" style="text-transform:uppercase">
+          <span class="ferr">請輸入兩碼英文</span>
+        </div>
+        <div class="field" id="sf-year">
+          <label>期別</label>
+          <select id="s-year">
+            <option value="">請選擇期別</option>
+            <option value="11501">115年1-2月期</option>
+            <option value="11503">115年3-4月期</option>
+            <option value="11505">115年5-6月期</option>
+            <option value="11507">115年7-8月期</option>
+            <option value="11509">115年9-10月期</option>
+            <option value="11511">115年11-12月期</option>
+            <option value="11401">114年1-2月期</option>
+            <option value="11403">114年3-4月期</option>
+            <option value="11405">114年5-6月期</option>
+            <option value="11407">114年7-8月期</option>
+            <option value="11409">114年9-10月期</option>
+            <option value="11411">114年11-12月期</option>
+          </select>
+          <span class="ferr">請選擇期別</span>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field" id="sf-start">
+          <label>起號（8位數）</label>
+          <input type="text" id="s-start" placeholder="03514800" maxlength="8" oninput="previewEnd()">
+          <span class="ferr">請輸入8位數字</span>
+        </div>
+        <div class="field">
+          <label>訖號（自動）</label>
+          <div class="auto-end" id="auto-end">—</div>
+          <span class="fhint">起號 + 49</span>
+        </div>
+      </div>
+      <button class="btn btn-setup" onclick="applySetup()">套用設定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HISTORY MODAL ── -->
+<div class="overlay" id="hist-overlay">
+  <div class="modal">
+    <div class="mhdr">
+      <span class="mtitle">歷史紀錄</span>
+      <button class="mclose" onclick="closeHistory()">×</button>
+    </div>
+    <div class="msummary">
+      <div class="sitem"><span class="sk">本期筆數</span><span class="sv" id="sum-count">0 筆</span></div>
+      <div class="sitem"><span class="sk">本期總金額</span><span class="sv" id="sum-total">$0</span></div>
+    </div>
+    <div class="mtable-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>日期</th><th style="text-align:right">金額</th><th></th>
+        </tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-void" id="btn-void" onclick="clickVoid()" disabled>作廢</button>
+      <button class="btn btn-edit" id="btn-edit" onclick="clickEdit()" disabled>修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM BOX ── -->
+<div class="coverlay" id="confirm-overlay">
+  <div class="cbox">
+    <div class="ctitle" id="c-title">確認操作</div>
+    <div class="cdesc"  id="c-desc"></div>
+    <div class="cbtns">
+      <button class="btn btn-cno"  onclick="closeConfirm()">取消</button>
+      <button class="btn btn-cyes" onclick="doConfirmOk()">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let S = { prefix:'', year:'', current:null, end:null, gasUrl:'', records:[], ready:false };
+let selIdx=null, editIdx=null, pendingFn=null, toastTm;
+
+// ── Init ──
+(function(){
+  try{ const s=localStorage.getItem('xh_inv3'); if(s) Object.assign(S,JSON.parse(s)); }catch(e){}
+  // Set today's date
+  document.getElementById('inv-date').value = todayISO();
+  refreshMain();
+  // Pre-fill setup if saved
+  if(S.prefix) document.getElementById('s-prefix').value = S.prefix;
+  if(S.year)   document.getElementById('s-year').value   = S.year;
+  if(S.current!==null){
+    const start = S.current - S.records.filter(r=>true).length;
+    // just show start in field if possible
+  }
+})();
+
+function save(){ localStorage.setItem('xh_inv3', JSON.stringify(S)); }
+
+// ── Helpers ──
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function isoToRoc(iso){
+  if(!iso) return '—';
+  const [y,m,d]=iso.split('-');
+  return `${parseInt(y)-1911}/${m}/${d}`;
+}
+function fmtNum(n){ return `${S.prefix}${String(n).padStart(8,'0')}`; }
+function fmtDisp(iso){
+  if(!iso) return '';
+  const [,m,d]=iso.split('-');
+  return `${parseInt(m)}月${parseInt(d)}日`;
+}
+
+// ── Setup ──
+function openSetup(){
+  // Pre-fill current values
+  if(S.prefix) document.getElementById('s-prefix').value=S.prefix;
+  if(S.year)   document.getElementById('s-year').value=S.year;
+  if(S.current!==null){
+    // show current start in field
+    document.getElementById('s-start').value=String(S.current).padStart(8,'0');
+    previewEnd();
+  }
+  document.getElementById('setup-overlay').classList.add('open');
+}
+function closeSetup(){ document.getElementById('setup-overlay').classList.remove('open'); }
+
+function previewEnd(){
+  const v=document.getElementById('s-start').value.trim();
+  document.getElementById('auto-end').textContent=
+    /^\d{8}$/.test(v)?String(parseInt(v)+49).padStart(8,'0'):'—';
+}
+
+function applySetup(){
+  const prefix=document.getElementById('s-prefix').value.trim().toUpperCase();
+  const year=document.getElementById('s-year').value;
+  const start=document.getElementById('s-start').value.trim();
+  let ok=true;
+  function chk(id,cond){ document.getElementById(id).classList.toggle('has-err',!cond); if(!cond) ok=false; }
+  chk('sf-prefix',/^[A-Z]{2}$/.test(prefix));
+  chk('sf-year',!!year);
+  chk('sf-start',/^\d{8}$/.test(start));
+  if(!ok) return;
+  S.prefix=prefix; S.year=year;
+  S.current=parseInt(start); S.end=parseInt(start)+49;
+  S.ready=true;
+  save(); closeSetup(); refreshMain();
+  toast('✓ 字軌設定已套用');
+}
+
+// ── Main ──
+function refreshMain(){
+  if(!S.ready || S.current===null){
+    document.getElementById('disp-num').textContent='請先設定字軌';
+    document.getElementById('disp-num').style.color='var(--muted)';
+    return;
+  }
+  if(S.current>S.end){
+    document.getElementById('disp-num').textContent='號碼已用盡';
+    document.getElementById('disp-num').style.color='var(--red)';
+    document.getElementById('btn-confirm').disabled=true;
+    return;
+  }
+  document.getElementById('disp-num').textContent=fmtNum(S.current);
+  document.getElementById('disp-num').style.color='';
+}
+
+// ── Date ──
+function onDateChange(){
+  const d=document.getElementById('inv-date').value;
+  const hint=document.getElementById('amt-hint');
+  const lastRec=[...S.records].filter(r=>!r.voided).slice(-1)[0];
+  if(lastRec&&d&&d<lastRec.date){
+    hint.textContent=`日期不得早於上一張（${fmtDisp(lastRec.date)}）`;
+    hint.className='hint-line err';
+  } else {
+    if(hint.className.includes('err')){ hint.textContent=''; hint.className='hint-line'; }
+  }
+}
+
+// ── Amount ──
+function onAmtInput(){
+  const v=parseInt(document.getElementById('inv-amount').value);
+  const ok=v>0;
+  const hint=document.getElementById('amt-hint');
+  document.getElementById('btn-confirm').disabled=!ok||!S.ready||S.current>S.end;
+  if(ok&&!hint.className.includes('err')){
+    hint.textContent='$'+v.toLocaleString();
+    hint.className='hint-line';
+  } else if(!ok&&!hint.className.includes('err')){
+    hint.textContent='';
+  }
+}
+
+// ── Confirm Invoice ──
+async function doConfirm(){
+  const amt=parseInt(document.getElementById('inv-amount').value);
+  if(!amt||amt<1) return;
+  if(!S.ready){ toast('請先設定字軌',true); openSetup(); return; }
+
+  const today=document.getElementById('inv-date').value||todayISO();
+  const lastRec=[...S.records].filter(r=>!r.voided).slice(-1)[0];
+  if(lastRec&&today<lastRec.date){
+    toast(`日期不得早於上一張（${fmtDisp(lastRec.date)}）`,true); return;
+  }
+
+  const invNum=fmtNum(S.current);
+  const rec={ seq:S.records.length+1, invNum, date:today, amount:amt, voided:false };
+
+  if(S.gasUrl){
+    try{
+      const r=await fetch(S.gasUrl,{method:'POST',body:JSON.stringify({action:'saveInvoice',...rec,sellerName:'小花著衣店',sellerTaxId:'72774995',sellerRegId:'304309040'})});
+      const j=await r.json();
+      if(j.result!=='ok'){ toast('儲存失敗：'+(j.error||''),true); return; }
+    }catch(e){ toast('連線失敗',true); return; }
+  }
+
+  S.records.push(rec); S.current++;
+  save(); refreshMain();
+  document.getElementById('inv-amount').value='';
+  document.getElementById('amt-hint').textContent='';
+  document.getElementById('btn-confirm').disabled=true;
+  toast(`✓ ${invNum} 已開立`);
+}
+
+// ── History ──
+function openHistory(){
+  selIdx=null; editIdx=null;
+  renderHist(); updateSummary(); updateFooter();
+  document.getElementById('hist-overlay').classList.add('open');
+}
+function closeHistory(){
+  document.getElementById('hist-overlay').classList.remove('open');
+  selIdx=null; editIdx=null;
+}
+function updateSummary(){
+  const active=S.records.filter(r=>!r.voided);
+  document.getElementById('sum-count').textContent=active.length+' 筆';
+  document.getElementById('sum-total').textContent='$'+active.reduce((s,r)=>s+r.amount,0).toLocaleString();
+}
+function updateFooter(){
+  const has=selIdx!==null;
+  const voided=has&&S.records[selIdx]?.voided;
+  const inEdit=editIdx!==null;
+  document.getElementById('btn-void').disabled=inEdit||!has||voided;
+  document.getElementById('btn-edit').disabled=!inEdit&&(!has||voided);
+  document.getElementById('btn-edit').textContent=inEdit?'確認修改':'修改';
+  document.getElementById('btn-edit').style.background=inEdit?'var(--success)':'';
+}
+function renderHist(){
+  const tbody=document.getElementById('hist-body');
+  if(!S.records.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted);font-size:0.82rem">尚無紀錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML=S.records.map((r,i)=>{
+    if(editIdx===i) return `
+      <tr class="edit-row" data-i="${i}">
+        <td class="seq-td">${r.seq}</td>
+        <td><input type="date" class="einput" value="${r.date}"></td>
+        <td><input type="number" class="einput" value="${r.amount}" style="width:100px;text-align:right"></td>
+        <td></td>
+      </tr>`;
+    const cls=[r.voided?'voided':'',selIdx===i?'sel':''].filter(Boolean).join(' ');
+    const vcell=r.voided
+      ?`<td class="vcell"><button class="btn-unvoid" onclick="clickUnvoid(event,${i})">取消作廢</button></td>`
+      :'<td class="vcell"></td>';
+    return `<tr class="${cls}" data-i="${i}" onclick="selectRow(${i})">
+      <td class="seq-td">${r.seq}</td>
+      <td>${fmtDisp(r.date)}</td>
+      <td class="amt-td">${r.voided?`<s>$${r.amount.toLocaleString()}</s>`:`$${r.amount.toLocaleString()}`}</td>
+      ${vcell}
+    </tr>`;
+  }).join('');
+}
+function selectRow(i){
+  if(editIdx!==null) return;
+  selIdx=(selIdx===i)?null:i;
+  renderHist(); updateFooter();
+}
+
+// ── Void ──
+function clickVoid(){
+  if(selIdx===null) return;
+  const i=selIdx;
+  const r=S.records[i];
+  openConfirm('是否確認作廢？',`發票 ${r.invNum}（$${r.amount.toLocaleString()}）將標記作廢`,()=>syncVoid(i,true));
+}
+function clickUnvoid(e,i){
+  e.stopPropagation(); selIdx=i;
+  const r=S.records[i];
+  openConfirm('是否確認取消作廢？',`將恢復發票 ${r.invNum} 的紀錄`,()=>syncVoid(i,false));
+}
+async function syncVoid(i,val){
+  S.records[i].voided=val;
+  if(S.gasUrl){ try{ await fetch(S.gasUrl,{method:'POST',body:JSON.stringify({action:'updateRecord',seq:S.records[i].seq,voided:val})}); }catch(e){} }
+  save(); selIdx=null; editIdx=null; renderHist(); updateFooter(); updateSummary();
+  toast(val?'✓ 已標記作廢，列上可按「取消作廢」':'✓ 已取消作廢');
+}
+
+// ── Edit ──
+function clickEdit(){
+  if(editIdx===null){
+    // Enter edit mode
+    if(selIdx===null) return;
+    editIdx=selIdx;
+    renderHist();
+    updateFooter();
+    return;
+  }
+  // Confirm edit: find the edit row by data-i attribute
+  const editRow = document.querySelector('#hist-body tr.edit-row');
+  if(!editRow){ toast('找不到編輯列',true); return; }
+  const dateInput = editRow.querySelector('input[type="date"]');
+  const amtInput  = editRow.querySelector('input[type="number"]');
+  const dateVal = dateInput ? dateInput.value : '';
+  const amtVal  = amtInput  ? parseInt(amtInput.value)||0 : 0;
+  if(!dateVal||amtVal<1){ toast('請填入有效日期與金額',true); return; }
+  const prev=[...S.records.slice(0,editIdx)].filter(r=>!r.voided).slice(-1)[0];
+  const next=S.records.slice(editIdx+1).filter(r=>!r.voided)[0];
+  if(prev&&dateVal<prev.date){ toast('日期不得早於上一張（'+fmtDisp(prev.date)+'）',true); return; }
+  if(next&&dateVal>next.date){ toast('日期不得晚於下一張（'+fmtDisp(next.date)+'）',true); return; }
+  const capIdx=editIdx, capDate=dateVal, capAmt=amtVal;
+  openConfirm('是否確認修改？','修改為 '+fmtDisp(capDate)+' / $'+capAmt.toLocaleString(), async()=>{
+    S.records[capIdx].date=capDate;
+    S.records[capIdx].amount=capAmt;
+    editIdx=null;
+    selIdx=null;
+    if(S.gasUrl){ try{ await fetch(S.gasUrl,{method:'POST',body:JSON.stringify({action:'updateRecord',seq:S.records[capIdx].seq,date:capDate,amount:capAmt})}); }catch(e){} }
+    save();
+    renderHist();
+    updateFooter();
+    updateSummary();
+    toast('✓ 修改已儲存');
+  });
+}
+
+// ── Confirm Box ──
+function openConfirm(title,desc,fn){
+  document.getElementById('c-title').textContent=title;
+  document.getElementById('c-desc').textContent=desc;
+  pendingFn=fn;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm(){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  pendingFn=null;
+}
+async function doConfirmOk(){
+  const fn = pendingFn;
+  closeConfirm();
+  if(fn) await fn();
+}
+
+// ── Toast ──
+function toast(msg,isErr){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(isErr?' is-err':'');
+  clearTimeout(toastTm);
+  setTimeout(()=>el.classList.add('show'),10);
+  toastTm=setTimeout(()=>el.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
